@@ -3,7 +3,9 @@ import { ProfilesService } from "./profiles.service";
 import { ObjectReferenceService } from "./object-reference.service";
 import { DataViewConverter } from "../converters/data-view.converter";
 import { DataView, ResourceType } from '@pepperi-addons/papi-sdk'
-import { parse, transform, JSONFilter, JSONBaseFilter, toApiQueryString, filter } from "@pepperi-addons/pepperi-filters";
+import { parse, transform, JSONFilter, JSONBaseFilter, toApiQueryString, filter, FieldType } from "@pepperi-addons/pepperi-filters";
+import { NodeTransformer } from "@pepperi-addons/pepperi-filters/build/json-filter-transformer";
+import { data_views } from "../meta_data";
 
 export class DataViewService {
 
@@ -28,24 +30,59 @@ export class DataViewService {
     }
 
     async find(where: string = '') {
-        const profilesService = this.profilesService;
-        const jsonFilter = parse(where, {
-            'InternalID': 'Integer',
-            'Type': 'String',
-            'Title': 'String',
-            'Hidden': 'Bool',
-            'CreationDate': 'DateTime',
-            'ModificationDate': 'DateTime',
-            'Context.Name': 'String',
-            'Context.ScreenSize': 'String',
-            'Context.Profile.InternalID': 'Integer',
-            'Context.Profile.Name': 'String',
-            'Context.Object.Resource': 'String',
-            'Context.Object.InternalID': 'Integer',
-            'Context.Object.Name': 'String',
-        });
+        const jsonFilter = parse(where, DataViewService.whereFields);
 
-        const transformedFilter = transform(jsonFilter, {
+        const transformedFilter = transform(jsonFilter, await this.fieldTransformations());
+
+        const uiControlWhere = toApiQueryString(transformedFilter);
+        console.log('DataView where:', where, ', UIControl where:', uiControlWhere)
+        const uiControls = await this.uiControlService.find(uiControlWhere || '');
+        console.log('Returned', uiControls.length, 'UIControls');
+        
+        let res = uiControls.map(DataViewConverter.toDataView);
+
+        for (let dataView of res) {
+            await this.updateFields(dataView);
+        }
+
+        // now lets filter them again
+        // for filters that aren't supported
+        res = filter(res, jsonFilter);
+        
+        return res;
+    }
+
+    async updateFields(dataView: DataView) {
+        if (dataView.Context.Object) {
+            dataView.Context.Object = await this.objectReferencesService.get(dataView.Context.Object);
+        }
+
+        if (dataView.Context.Profile) {
+            if (dataView.Context.Profile.InternalID) {
+                const profile = await this.profilesService.get(dataView.Context.Profile.InternalID);
+
+                if (!profile) {
+                    throw new Error(`Profile with InternalID = ${dataView.Context.Profile.InternalID} not found`);
+                }
+
+                dataView.Context.Profile = profile;
+            }
+            else if (dataView.Context.Profile.Name) {
+                const profile = await this.profilesService.get(dataView.Context.Profile.Name);
+
+                if (!profile) {
+                    throw new Error(`Profile with Name = ${dataView.Context.Profile.Name} not found`);
+                }
+
+                dataView.Context.Profile = profile;
+            }
+        }
+    }
+
+    async fieldTransformations(): Promise<{ [key: string]: NodeTransformer }> {
+        const profiles = await this.profilesService.profiles();
+        const atds = await this.objectReferencesService.objectReferences();
+        return {
             'Type': false, // DataViewType unsupported
             'Title': false, // Title not supported
             
@@ -72,8 +109,11 @@ export class DataViewService {
             },
             
             // doesn't exist on the UIControl
-            // maybe convert to InternalID filter
-            'Context.Profile.Name': false,
+            // convert to InternalID filter
+            'Context.Profile.Name': (f: JSONBaseFilter) => {
+                f.ApiName = 'PermissionRoleID';
+                f.Values = [profiles.find(profile => profile.Name === f.Values[0])?.Name || ''];
+            },
             
             // Context.Object.Resource = activities => UIControl.Type starts with '[GA'
             'Context.Object.Resource': (f: JSONBaseFilter) => {
@@ -96,53 +136,29 @@ export class DataViewService {
             },
 
             // doensn't exist on the UIControl
-            // maybe convert to InternalID filter
-            'Context.Object.Name': false,
-        });
-
-        const uiControlWhere = toApiQueryString(transformedFilter);
-        console.log('DataView where:', where, ', UIControl where:', uiControlWhere)
-        const uiControls = await this.uiControlService.find(uiControlWhere || '');
-        console.log('Returned', uiControls.length, 'UIControls');
-        
-        let res = uiControls.map(DataViewConverter.toDataView);
-
-        // now lets filter them again
-        // for filters that aren't supported
-        res = filter(res, jsonFilter);
-        
-        for (let dataView of res) {
-            await this.updateFields(dataView);
-        }
-
-        return res;
+            // convert to InternalID filter
+            'Context.Object.Name': (f: JSONBaseFilter) => {
+                f.ApiName = 'Type';
+                f.Operation = 'Contains',
+                f.Values = [ atds.find(atd => atd.Name === f.Values[0])?.InternalID?.toString() || '' ]
+            },
+        };
     }
 
-    async updateFields(dataView: DataView) {
-        if (dataView.Context.Object) {
-            dataView.Context.Object = await this.objectReferencesService.get(dataView.Context.Object);
-        }
-
-        if (dataView.Context.Profile) {
-            if (dataView.Context.Profile.InternalID) {
-                const profile = await this.profilesService.getByInternalID(dataView.Context.Profile.InternalID);
-
-                if (!profile) {
-                    throw new Error(`Profile with InternalID = ${dataView.Context.Profile.InternalID} not found`);
-                }
-
-                dataView.Context.Profile = profile;
-            }
-            else if (dataView.Context.Profile.Name) {
-                const profile = await this.profilesService.getByName(dataView.Context.Profile.Name);
-
-                if (!profile) {
-                    throw new Error(`Profile with Name = ${dataView.Context.Profile.Name} not found`);
-                }
-
-                dataView.Context.Profile = profile;
-            }
-        }
+    static whereFields: { [key: string]: FieldType } = {
+        'InternalID': 'Integer',
+        'Type': 'String',
+        'Title': 'String',
+        'Hidden': 'Bool',
+        'CreationDate': 'DateTime',
+        'ModificationDate': 'DateTime',
+        'Context.Name': 'String',
+        'Context.ScreenSize': 'String',
+        'Context.Profile.InternalID': 'Integer',
+        'Context.Profile.Name': 'String',
+        'Context.Object.Resource': 'String',
+        'Context.Object.InternalID': 'Integer',
+        'Context.Object.Name': 'String',
     }
 
 }

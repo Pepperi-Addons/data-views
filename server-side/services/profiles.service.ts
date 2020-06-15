@@ -9,15 +9,19 @@ export class ProfilesService {
 
     }
 
-    getByName(name: string) {
-        return this.profiles().then(arr => arr.find(profile => profile.Name === name));
+    get(name: string): Promise<Profile | undefined>;
+    get(id: number): Promise<Profile | undefined>;
+    
+    get(by: string | number): Promise<Profile | undefined> {
+        switch(typeof by) {
+            case 'string':
+                return this.profiles().then(arr => arr.find(profile => profile.Name === by));
+            case 'number':
+                return this.profiles().then(arr => arr.find(profile => profile.InternalID === by));
+        }
     }
-
-    getByInternalID(id: number) {
-        return this.profiles().then(arr => arr.find(profile => profile.InternalID === id));
-    }
-
-    private async profiles() {
+    
+    async profiles() {
         if (!this._profiles) {
             this._profiles = await this.backendService.profiles();
         }

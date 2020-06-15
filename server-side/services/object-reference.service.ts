@@ -10,6 +10,14 @@ export class ObjectReferenceService {
 
     }
 
+    async objectReferences()  {
+        if (!this._objectReferences) {
+            this._objectReferences = await this.backendService.pepperiObjects()
+                .then(arr => arr.map(ObjectReferenceConverter.toObjectReference).filter(Boolean)) as ObjectReference[];
+        }
+        return this._objectReferences;
+    }
+
     async get(reference: ObjectReference) {
         let res: ObjectReference | undefined;
 
@@ -37,13 +45,4 @@ export class ObjectReferenceService {
     private async getByName(type: ResourceType, name: string) {
         return this.objectReferences().then(arr => arr.find(obj => obj.Resource === type && obj.Name === name))
     }
-
-    private async objectReferences()  {
-        if (!this._objectReferences) {
-            this._objectReferences = await this.backendService.pepperiObjects()
-                .then(arr => arr.map(ObjectReferenceConverter.toObjectReference).filter(Boolean)) as ObjectReference[];
-        }
-        return this._objectReferences;
-    }
-
 }
