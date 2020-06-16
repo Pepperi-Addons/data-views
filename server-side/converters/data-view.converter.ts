@@ -142,9 +142,92 @@ export class DataViewConverter {
         }
     }
 
-    // static toUIControlData(dataView: DataView): UIControlData {
+    static toUIControlData(dataView: DataView): UIControlData {
+        const res: UIControlData = {
+            ObjectID: dataView.InternalID || 0,
+            Hidden: dataView.Hidden || false,
+            Type: DataViewConverter.toType(dataView.Context),
+            CreationDate: dataView.CreationDate || '',
+            ModificationDate: dataView.ModificationDate || '',
+            ControlFields: (dataView.Fields as any[]).map((field, i) => {
+                const res: UIControlField = {
+                    ParentField: "", // overriden in Tree
+                    Title: (field as any).Title || '', 
+                    WrntyFieldName: (field as any).Title || '', // TODO: what is this
+                    MandatoryField: (field as any).Mandatory || false,
+                    ReadOnlyField: 'ReadOnly' in field ? field.ReadOnly : true,
+                    FieldConditions: null, // not in use - hopefully
+                    CustomField: false, // TODO: what does this mean?
+                    ApiName: field.FieldID,
+                    FieldType: 'Type' in field ? DataViewFieldTypes[field.Type] : DataViewFieldTypes.TextBox,
+                    OptionalValues: undefined, // TODO: not in use anymore?
+                    MinValue: -1000000000, // deprecated, should be on the config
+                    MaxValue: 1000000000,
+                    MaxCharacters: 0, // todo: in use?
+                    MaxLines: 0, // todo: in use?
+                    Layout: {
+                        X: field.Layout?.Origin ? field.Layout.Origin.X : 0,
+                        Y: field.Layout?.Origin ? field.Layout.Origin.Y : 0,
+                        Width: field.Layout?.Size ? field.Layout.Size.Width : 1,
+                        Field_Height: field.Layout?.Size ? field.Layout.Size.Height : 1,
+                        Line_Number: i,
+                        xAlignment: field.Style?.Alignment ? HorizontalAlignments[field.Style.Alignment.Horizontal] : HorizontalAlignments.Stretch,
+                        yAlignment: field.Style?.Alignment ? VerticalAlignments[field.Style.Alignment.Vertical] : VerticalAlignments.Center
+                    },
+                    ColumnWidth: 10, // overriden in Grid
+                    ObjectTypeReference: 0, // todo: what is this??
+                    DefaultValue: '',
+                    Hidden: false
+                }
+                return res;
+            }),
+            ControlConditions: [],
+            Family: '', // not in use
+            Name: '', // not in use
+            DisplayName: dataView.Title || '',
+            HighlightFirst: false, // TODO: where is this mapped to? 
+            Columns: (dataView as any).Columns ? (dataView as any).Columns.length : 1,
+            SortBy: dataView.ListData?.Sort && dataView.ListData.Sort.length ? dataView.ListData.Sort[0].FieldID : '',
+            SortAsc: dataView.ListData?.Sort && dataView.ListData.Sort.length ? dataView.ListData.Sort[0].Ascending : false,
+            DefaultView: '',
+            GroupBy: dataView.ListData?.Section ? dataView.ListData.Section.FieldID : '',
+            Flat: true, // TODO: where is this mapped to?
+            ActivityTypesID: null, // TODO: where is this mapped to?
+            Statuses: null, // TODO: where is this mapped to?
+            ControlName: null, // TODO: what is this??
+            ViewType: DataViewConverter.toUIControlType(dataView.Type),
+            PermissionRoleID: dataView.Context.Profile.InternalID || 0,
+            PermissionRoleName: dataView.Context.Profile.Name || '',
+            Version: 1, // TODO: 
+            Layout: {
+                columnDefinitions: [], // not in use
+                rowDefinitions: 'Rows' in dataView ? dataView.Rows.map(row => { return { mode: row.Mode === 'MatchParent' ? 1 : 0 }}) : [],
+                frozenColumnsCount: 0, // override in Grid
+                Width: 0, // TODO: what is this???
+                MinimumWidth: 0, // override in Grid
+                WidthType: 0 // not supported
+            },
+            RowsAs: null,
+            ColumnsAs: null,
+            ColumnsOrderBy: null, // not in use
+            RowsOrderBy: null // not in use
 
-    // }
+        };
+
+        if (dataView.Type === 'Grid') {
+            const grid = dataView as GridDataView;
+            res.Layout.MinimumWidth = grid.MinimumColumnWidth;
+            res.Layout.frozenColumnsCount = grid.FrozenColumnsCount;
+
+            (dataView as GridDataView).Fields.forEach((field, i) => {
+                res.ControlFields[i].ColumnWidth = grid.Columns[i].Width;
+                res.ControlFields[i].Layout.Width = 1;
+                res.ControlFields[i].Layout.Field_Height = 1;
+            });
+        }
+
+        return res;
+    }
 
     static convertFromEnum<T>(e: { [key: string]: number }, num: number, defaultVal: T): T {
         return (Object.keys(e).find(key => e[key] == num) || defaultVal) as T;
@@ -170,6 +253,26 @@ export class DataViewConverter {
                 return 'Details';
         }
 
+    }
+
+    static toUIControlType(type: DataViewType): number {
+        const res: number = UIControlViewTypes.None;
+
+        switch (type) {
+            case 'Grid':
+            case 'Line':
+            case 'CardsGrid':
+            case 'Map': 
+                return UIControlViewTypes[type];
+
+            case 'Card':
+                return UIControlViewTypes.Cards;
+
+            case 'Details':
+                return UIControlViewTypes.Detailed;
+        }
+
+        return res;
     }
 
     static toResource(prefix: ResourcePrefix): ResourceType {
@@ -243,5 +346,28 @@ export class DataViewConverter {
                 InternalID: permissionRoleID
             }
         }
+    }
+
+    static toType(context: DataViewContext): string {
+        let res = context.Name;
+
+        // add screen size suffix
+        if (context.ScreenSize !== 'Tablet') {
+            res += context.ScreenSize;
+        }
+
+        if (context.Object) {
+
+            // [GL#0b089829-4902-482a-98ce-2d396df48a1b]
+            if (context.Object.Resource === 'lists') {
+                res = `[GL#${context.Object.UUID}]${res}`;
+            }
+            else {
+                res = `[${DataViewConverter.toResourcePrefix(context.Object.Resource)}#${context.Object.InternalID}]${res}`;
+            }
+
+        }
+
+        return res;
     }
 }

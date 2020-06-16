@@ -24,8 +24,8 @@ export class UIControlService {
         }
     }
 
-    async upsert(objects: UIControlData[]) {
-        return this.backendService.upsertUiControls(objects.map(UIControlDataConverter.toUIControl));
+    async upsert(uiControl: UIControlData): Promise<UIControlData> {
+        return this.backendService.upsertUiControl(UIControlDataConverter.toUIControl(uiControl)).then(UIControlDataConverter.toUIControlData);
     }
 
     internalIDFilter(internalID: number): JSONFilter {

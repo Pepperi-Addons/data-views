@@ -6,13 +6,21 @@ import { UIControlData, UIControl, DataViewContext, ObjectReference, DataViewScr
 export class UIControlDataConverter {
 
     static toUIControl(obj: UIControlData): UIControl {
-        return {
+        const res =  {
             InternalID: obj.ObjectID,
             UIControlData: JSON.stringify(obj),
             Type: obj.Type,
             PermissionRoleID: obj.PermissionRoleID,
             Hidden: obj.Hidden
-        }
+        };
+
+        // these properties don't exist on UIControlData in WSIM
+        // But I added them to UIControlData so that I don't have to shlep the wrapper object
+        delete obj.Hidden;
+        delete obj.CreationDate;
+        delete obj.ModificationDate;
+
+        return res;
     }
 
     static toUIControlData(obj: UIControl): UIControlData {

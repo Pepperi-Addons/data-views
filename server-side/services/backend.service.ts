@@ -7,22 +7,22 @@ export class BackendService {
     }
 
    async profiles() {
-       return this.papiClient.profiles.find();
+       return this.papiClient.profiles.iter().toArray();
    }
 
     async pepperiObjects() {
-        return this.papiClient.metaData.pepperiObjects.find();
+        return this.papiClient.metaData.pepperiObjects.iter().toArray();
     }
 
     async uiControls(where: string, includeDeleted: boolean = false) {
-        return this.papiClient.uiControls.find({
+        return this.papiClient.uiControls.iter({
             where: where,
             page_size: -1,
             include_deleted: includeDeleted
-        });
+        }).toArray();
     }
 
-    async upsertUiControls(uiControls: UIControl[]) {
-        return this.papiClient.uiControls.batchUpsert(uiControls);
+    async upsertUiControl(uiControl: UIControl) {
+        return this.papiClient.uiControls.upsert(uiControl);
     }
 }
