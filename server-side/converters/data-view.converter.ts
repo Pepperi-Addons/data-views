@@ -201,7 +201,7 @@ export class DataViewConverter {
             Version: 1, // TODO: 
             Layout: {
                 columnDefinitions: [], // not in use
-                rowDefinitions: 'Rows' in dataView ? dataView.Rows.map(row => { return { mode: row.Mode === 'MatchParent' ? 1 : 0 }}) : [],
+                rowDefinitions: 'Rows' in dataView ? dataView.Rows.map(row => { return { mode: DataViewRowModes[row.Mode] as 0 | 1 }}) : [],
                 frozenColumnsCount: 0, // override in Grid
                 Width: 0, // TODO: what is this???
                 MinimumWidth: 0, // override in Grid
