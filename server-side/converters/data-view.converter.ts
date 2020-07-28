@@ -323,8 +323,8 @@ export class DataViewConverter {
             matches = type.match(/^\[GL#((\w|-)+)\](\w+)$/);
             if (matches && matches.length == 4) {
                 objectReference = {
-                    InternalID: parseInt(matches[2]),
-                    Resource: DataViewConverter.toResource(matches[1] as ResourcePrefix)
+                    UUID: matches[1],
+                    Resource: DataViewConverter.toResource('GL')
                 }
                 name = matches[3];
             }

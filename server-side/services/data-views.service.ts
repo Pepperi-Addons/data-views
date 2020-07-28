@@ -68,14 +68,14 @@ export class DataViewService {
         if (dataView.InternalID) {
             existing = await this.get(dataView.InternalID);
 
-            this.updateContext(dataView);
+            await this.updateContext(dataView);
 
             if (!this.compare(dataView.Context, existing.Context)) {
                 throw new Error(`The Context send does not match the current Context. Current Context: ${JSON.stringify(existing.Context)}`)
             }
         }
         else {
-            this.updateContext(dataView);
+            await this.updateContext(dataView);
             
             // See if there is a dataview with this context already
             let where = this.createContextQuery(dataView.Context);
@@ -250,6 +250,7 @@ export class DataViewService {
         'Context.Object.Resource': 'String',
         'Context.Object.InternalID': 'Integer',
         'Context.Object.Name': 'String',
+        'Context.Object.UUID': 'String',
     }
 
 }

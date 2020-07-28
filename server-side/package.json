@@ -28,8 +28,8 @@
     },
     "dependencies": {
         "@pepperi-addons/debug-server": "0.0.24",
-        "@pepperi-addons/papi-sdk": "file:../../papi-sdk",
-        "@pepperi-addons/pepperi-filters": "file:../../pepperi-filters",
+        "@pepperi-addons/papi-sdk": "^1.6.0",
+        "@pepperi-addons/pepperi-filters": "^1.0.4",
         "@rollup/plugin-json": "^4.1.0",
         "bottlejs": "^1.7.2"
     }
