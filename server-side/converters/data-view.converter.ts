@@ -334,7 +334,7 @@ export class DataViewConverter {
         let screenSize: DataViewScreenSize = 'Tablet';
         matches = name.match(/^(\w+)(Landscape|Phablet)$/);
         if (matches && matches.length == 3) {
-            screenSize = matches[0] as DataViewScreenSize;
+            screenSize = matches[2] as DataViewScreenSize;
             name = matches[1];
         }
 
