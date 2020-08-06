@@ -1,4 +1,4 @@
-import { DataViewTypes, ResourceTypes, DataViewType, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, DataViewRowModes } from '@pepperi-addons/papi-sdk'
+import { DataViewTypes, ResourceTypes, DataViewType, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, DataViewRowModes, DataViewScreenSizes } from '@pepperi-addons/papi-sdk'
 
 export function validateDataView(obj: any) {
     if (typeof obj !== 'object') {
@@ -11,7 +11,12 @@ export function validateDataView(obj: any) {
     validateProperty(obj, 'Type', DataViewTypes);
     validateProperty(obj, 'Context', 'object');
     validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
-    validateProperty(obj.Context, 'ScreenSize', 'string', 'Context.ScreenSize');
+
+    if (!/^[a-zA-Z0-9_]*/.test(obj.Context.Name)) {
+        throw new Error(`Context.Name can only contain letters, numbers or an underscore`);
+    }
+
+    validateProperty(obj.Context, 'ScreenSize', DataViewScreenSizes, 'Context.ScreenSize');
     validateProperty(obj.Context, 'Profile', 'object', 'Context.Profile');
     
     if (!('InternalID' in obj.Context.Profile || 'Name' in obj.Context.Profile)) {

@@ -160,12 +160,12 @@ export class DataViewService {
     createContextQuery(context: DataViewContext) {
         const where = concat(
             true, 
-            `Context.Name = ${context.Name}`,
-            `Context.ScreenSize = ${context.ScreenSize}`,
+            `Context.Name = '${context.Name}'`,
+            `Context.ScreenSize = '${context.ScreenSize}'`,
             `Context.Profile.InternalID = ${context.Profile.InternalID}`,
-            context.Object ? `Context.Object.Resource = ${context.Object.Resource}` : undefined,
+            context.Object ? `Context.Object.Resource = '${context.Object.Resource}'` : undefined,
             context.Object?.Resource === 'lists' ? `Context.Object.InternalID = ${context.Object.InternalID}` : undefined,
-            context.Object && context.Object.Resource !== 'lists' ? `Context.Object.UUID = ${context.Object.UUID}` : undefined,
+            context.Object && context.Object.Resource !== 'lists' ? `Context.Object.UUID = '${context.Object.UUID}'` : undefined,
         )
         return where;
     }
