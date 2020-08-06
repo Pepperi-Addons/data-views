@@ -12,7 +12,7 @@ export function validateDataView(obj: any) {
     validateProperty(obj, 'Context', 'object');
     validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
 
-    if (!/^[a-zA-Z0-9_]*/.test(obj.Context.Name)) {
+    if (!/^[a-zA-Z0-9_]*$/.test(obj.Context.Name)) {
         throw new Error(`Context.Name can only contain letters, numbers or an underscore`);
     }
 
