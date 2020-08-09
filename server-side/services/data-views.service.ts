@@ -29,7 +29,7 @@ export class DataViewService {
         return res;
     }
 
-    async find(where: string = '') {
+    async find(where: string = '', include_deleted: boolean) {
         // parse the where into a JSONFilter
         const jsonFilter = parse(where, DataViewService.whereFields);
 
@@ -38,7 +38,7 @@ export class DataViewService {
         console.log('DataView where:', where, ', UIControl where:', uiControlWhere);
 
         // get the UIControls
-        const uiControls = await this.uiControlService.find(uiControlWhere || '');
+        const uiControls = await this.uiControlService.find(uiControlWhere || '', include_deleted);
         
         // convert the UIControls to DataViews
         let res = uiControls.map(DataViewConverter.toDataView);
@@ -79,7 +79,7 @@ export class DataViewService {
             
             // See if there is a dataview with this context already
             let where = this.createContextQuery(dataView.Context);
-            let results = await this.find(where);
+            let results = await this.find(where, false);
             if (results.length > 1) {
                 throw new Error(`There should only be one data view for context: ${JSON.stringify(dataView.Context)}`);
             }

@@ -10,7 +10,7 @@ export async function data_views(client: Client, request: Request) {
     let res: any = undefined;
 
     if (request.method === 'GET') {
-        res = await service.find(request.query.where || '');
+        res = await service.find(request.query.where || '', request.query.include_deleted || false);
     }
     else if (request.method === 'POST') {
         res = await service.upsert(request.body);

@@ -9,12 +9,12 @@ export class UIControlService {
 
     }
 
-    find(where: string) {
-        return this.backendService.uiControls(where).then(arr => arr.map(UIControlDataConverter.toUIControlData))
+    find(where: string, include_deleted: boolean) {
+        return this.backendService.uiControls(where, include_deleted).then(arr => arr.map(UIControlDataConverter.toUIControlData))
     }
 
     async get(internalID: number) {
-        const arr = await this.backendService.uiControls(toApiQueryString(this.internalIDFilter(internalID)) || '');
+        const arr = await this.backendService.uiControls(toApiQueryString(this.internalIDFilter(internalID)) || '', true);
 
         if (arr.length) {
             return UIControlDataConverter.toUIControlData(arr[0])
