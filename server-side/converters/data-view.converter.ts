@@ -17,8 +17,8 @@ export class DataViewConverter {
             Type: configuration.Type,
             Title: uiControl.DisplayName,
             Hidden: uiControl.Hidden,
-            CreationDate: uiControl.CreationDate,
-            ModificationDate: uiControl.ModificationDate, 
+            CreationDateTime: uiControl.CreationDate,
+            ModificationDateTime: uiControl.ModificationDate, 
             Context: DataViewConverter.toDataViewContext(uiControl.Type, uiControl.PermissionRoleID),
             ListData: undefined,
             Fields: []
@@ -147,8 +147,8 @@ export class DataViewConverter {
             ObjectID: dataView.InternalID || 0,
             Hidden: dataView.Hidden || false,
             Type: DataViewConverter.toType(dataView.Context),
-            CreationDate: dataView.CreationDate || '',
-            ModificationDate: dataView.ModificationDate || '',
+            CreationDate: dataView.CreationDateTime || '',
+            ModificationDate: dataView.ModificationDateTime || '',
             ControlFields: (dataView.Fields as any[]).map((field, i) => {
                 const res: UIControlField = {
                     ParentField: "", // overriden in Tree

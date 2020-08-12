@@ -43,17 +43,17 @@ export function validateDataView(obj: any) {
 
     const configuration = configurations[obj.Context.Name];
 
-    if (configuration.Object) {
+    if (configuration && configuration.Object) {
         validateProperty(obj.Context, 'Object', 'object', 'Context.Object');
     }
 
     if (obj.Context.Object) {
-        if (!configuration.Object) {
+        if (configuration && !configuration.Object) {
             throw new Error(`Unexpected field: 'Context.Object' for DataView of '${obj.Context.Name}'`)
         }
 
         validateProperty(obj.Context.Object, 'Resource', ResourceTypes, 'Context.Object.Resource');
-        if (configuration.Object.Resource && obj.Context.Object.Resource !== configuration.Object.Resource) {
+        if (configuration && configuration.Object.Resource && obj.Context.Object.Resource !== configuration.Object.Resource) {
             throw new Error(`Expected field: 'Context.Object.Resource' for DataView of '${obj.Context.Name}' to be '${configuration.Object.Resource}'`)
         }
 
