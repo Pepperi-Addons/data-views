@@ -29,14 +29,15 @@ export function validateDataView(obj: any) {
     validateProperty(obj.Context, 'ScreenSize', DataViewScreenSizes, 'Context.ScreenSize');
     validateProperty(obj.Context, 'Profile', 'object', 'Context.Profile');
     
-    if (!('InternalID' in obj.Context.Profile || 'Name' in obj.Context.Profile)) {
+    if (!('InternalID' in obj.Context.Profile) && !('Name' in obj.Context.Profile)) {
         throw new Error(`Expected field: 'Context.Profile' to have either 'Name' or 'InternalID'`);
     }
 
-    if (obj.Context.Profile.InternalID) {
+    if ('InternalID' in obj.Context.Profile) {
         validateProperty(obj.Context.Profile, 'InternalID', 'number', 'Context.Profile.InternalID');
     }
-    else {
+
+    if ('Name' in obj.Context.Profile) {
         validateProperty(obj.Context.Profile, 'Name', 'string', 'Context.Profile.Name');
     }
 
@@ -62,14 +63,15 @@ export function validateDataView(obj: any) {
         }
         else {
             // ATD
-            if (!('InternalID' in obj.Context.Object || 'Name' in obj.Context.Object)) {
+            if (!('InternalID' in obj.Context.Object) && !('Name' in obj.Context.Object)) {
                 throw new Error(`Expected field: 'Context.Object' to have either 'Name' or 'InternalID`);
             }
 
-            if (obj.Context.Object.InternalID) {
+            if ('InternalID' in obj.Context.Object) {
                 validateProperty(obj.Context.Object, 'InternalID', 'number', 'Context.Object.InternalID');
             }
-            else {
+            
+            if ('Name' in obj.Context.Object) {
                 validateProperty(obj.Context.Object, 'Name', 'string', 'Context.Object.Name');
             }
         }
