@@ -1,4 +1,5 @@
 import { DataViewTypes, ResourceTypes, DataViewType, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, DataViewRowModes, DataViewScreenSizes } from '@pepperi-addons/papi-sdk'
+import configurations from '../ui-control-configurations.json'
 
 export function validateDataView(obj: any) {
     if (typeof obj !== 'object') {
@@ -10,17 +11,26 @@ export function validateDataView(obj: any) {
 
     validateProperty(obj, 'Type', DataViewTypes);
     validateProperty(obj, 'Context', 'object');
-    validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
 
+    // Context.Name
+    validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
+    
     if (!/^[a-zA-Z0-9_]*$/.test(obj.Context.Name)) {
         throw new Error(`Context.Name can only contain letters, numbers or an underscore`);
+    }
+
+    if (obj.Type === 'Menu' || obj.Type === 'Configuration') {
+        const types = Object.entries(configurations)
+            .filter(([_, value]) => value.Type === obj.Type)
+            .map(([key, _]) => key);
+        validateProperty(obj.Context, 'Name', types, 'Context.Name')
     }
 
     validateProperty(obj.Context, 'ScreenSize', DataViewScreenSizes, 'Context.ScreenSize');
     validateProperty(obj.Context, 'Profile', 'object', 'Context.Profile');
     
     if (!('InternalID' in obj.Context.Profile || 'Name' in obj.Context.Profile)) {
-        throw new Error(`Expected field: 'Context.Profile' to have either 'Name' or 'InternalID`);
+        throw new Error(`Expected field: 'Context.Profile' to have either 'Name' or 'InternalID'`);
     }
 
     if (obj.Context.Profile.InternalID) {
@@ -30,8 +40,21 @@ export function validateDataView(obj: any) {
         validateProperty(obj.Context.Profile, 'Name', 'string', 'Context.Profile.Name');
     }
 
+    const configuration = configurations[obj.Context.Name];
+
+    if (configuration.Object) {
+        validateProperty(obj.Context, 'Object', 'object', 'Context.Object');
+    }
+
     if (obj.Context.Object) {
+        if (!configuration.Object) {
+            throw new Error(`Unexpected field: 'Context.Object' for DataView of '${obj.Context.Name}'`)
+        }
+
         validateProperty(obj.Context.Object, 'Resource', ResourceTypes, 'Context.Object.Resource');
+        if (configuration.Object.Resource && obj.Context.Object.Resource !== configuration.Object.Resource) {
+            throw new Error(`Expected field: 'Context.Object.Resource' for DataView of '${obj.Context.Name}' to be '${configuration.Object.Resource}'`)
+        }
 
         if (obj.Context.Object.Resource === 'lists') {
             // Generic List
