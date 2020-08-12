@@ -176,6 +176,16 @@ export class DataViewService {
         return {
             'Type': false, // DataViewType unsupported
             'Title': false, // Title not supported
+
+            // CreationDateTime => CreationDate
+            'CreationDateTime': (f: JSONBaseFilter) => { 
+                f.ApiName = 'CreationDate'
+            },
+
+            // ModificationDateTime => ModificationDate
+            'ModificationDateTime': (f: JSONBaseFilter) => { 
+                f.ApiName = 'ModificationDate'
+            },
             
             // Context.Name is UIControl.Type
             'Context.Name': (f: JSONBaseFilter) => { 
@@ -241,8 +251,8 @@ export class DataViewService {
         'Type': 'String',
         'Title': 'String',
         'Hidden': 'Bool',
-        'CreationDate': 'DateTime',
-        'ModificationDate': 'DateTime',
+        'CreationDateTime': 'DateTime',
+        'ModificationDateTime': 'DateTime',
         'Context.Name': 'String',
         'Context.ScreenSize': 'String',
         'Context.Profile.InternalID': 'Integer',
