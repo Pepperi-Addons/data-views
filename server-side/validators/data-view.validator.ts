@@ -64,7 +64,7 @@ export function validateDataView(obj: any) {
         else {
             // ATD
             if (!('InternalID' in obj.Context.Object) && !('Name' in obj.Context.Object)) {
-                throw new Error(`Expected field: 'Context.Object' to have either 'Name' or 'InternalID`);
+                throw new Error(`Expected field: 'Context.Object' to have either 'Name' or 'InternalID'`);
             }
 
             if ('InternalID' in obj.Context.Object) {
