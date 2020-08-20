@@ -15,8 +15,14 @@ export function validateDataView(obj: any) {
     // Context.Name
     validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
     
-    if (!/^[a-zA-Z0-9_]*$/.test(obj.Context.Name)) {
-        throw new Error(`Context.Name can only contain letters, numbers or an underscore`);
+    if (!/^[a-zA-Z0-9_]+$/.test(obj.Context.Name)) {
+        throw new Error(`Context.Name must be non-empty and can only contain letters, numbers or an underscore`);
+    }
+
+    const configuration = configurations[obj.Context.Name];
+
+    if (configuration && configuration.Type !== obj.Type) {
+        throw new Error(`Expected Type = '${configuration.Type}' for Context.Name = '${obj.Context.Name}'`);
     }
 
     if (obj.Type === 'Menu' || obj.Type === 'Configuration') {
@@ -40,8 +46,6 @@ export function validateDataView(obj: any) {
     if ('Name' in obj.Context.Profile) {
         validateProperty(obj.Context.Profile, 'Name', 'string', 'Context.Profile.Name');
     }
-
-    const configuration = configurations[obj.Context.Name];
 
     if (configuration && configuration.Object) {
         validateProperty(obj.Context, 'Object', 'object', 'Context.Object');
