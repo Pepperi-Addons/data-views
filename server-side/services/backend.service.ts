@@ -7,11 +7,11 @@ export class BackendService {
     }
 
    async profiles() {
-       return this.papiClient.profiles.iter().toArray();
+       return this.papiClient.profiles.iter({ include_deleted: true }).toArray();
    }
 
-    async pepperiObjects() {
-        return this.papiClient.metaData.pepperiObjects.iter().toArray();
+    async types() {
+        return this.papiClient.types.iter({ include_deleted: true }).toArray();
     }
 
     async uiControls(where: string, includeDeleted: boolean = false) {

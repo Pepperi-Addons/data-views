@@ -131,8 +131,8 @@ function validateGridDataView(obj: any) {
         validateProperty(field.Layout.Origin, 'Y', 'number', `Fields[${i}].Layout.Origin.Y`);
         validateProperty(field, 'Style', 'object', `Fields[${i}].Style`);
         validateProperty(field.Style, 'Alignment', 'object', `Fields[${i}].Style.Alignment`);
-        validateProperty(field.Style.Alignment, 'Vertical', Object.keys(VerticalAlignments), `Fields[${i}].Style.Vertical`);
-        validateProperty(field.Style.Alignment, 'Horizontal', Object.keys(HorizontalAlignments), `Fields[${i}].Style.Horizontal`);
+        validateProperty(field.Style.Alignment, 'Vertical', Object.keys(VerticalAlignments), `Fields[${i}].Style.Alignment.Vertical`);
+        validateProperty(field.Style.Alignment, 'Horizontal', Object.keys(HorizontalAlignments), `Fields[${i}].Style.Alignment.Horizontal`);
     })
 
     validateProperty(obj, 'Columns', 'array');
@@ -140,7 +140,7 @@ function validateGridDataView(obj: any) {
         validateProperty(column, 'Width', 'number', `Columns[${i}].Width`)
     })
 
-    if (!obj.Columns.length === obj.Fields.length) {
+    if (obj.Columns.length !== obj.Fields.length) {
         throw new Error('A Grid\'s number of columns must match it\'s number of fields');
     }
 
@@ -164,8 +164,8 @@ function validateBaseFormDataView(obj: any) {
         validateProperty(field.Layout.Size, 'Height', 'number', `Fields[${i}].Layout.Size.Height`);
         validateProperty(field, 'Style', 'object', `Fields[${i}].Style`);
         validateProperty(field.Style, 'Alignment', 'object', `Fields[${i}].Style.Alignment`);
-        validateProperty(field.Style.Alignment, 'Vertical', Object.keys(VerticalAlignments), `Fields[${i}].Style.Vertical`);
-        validateProperty(field.Style.Alignment, 'Horizontal', Object.keys(HorizontalAlignments), `Fields[${i}].Style.Horizontal`);
+        validateProperty(field.Style.Alignment, 'Vertical', Object.keys(VerticalAlignments), `Fields[${i}].Style.Alignment.Vertical`);
+        validateProperty(field.Style.Alignment, 'Horizontal', Object.keys(HorizontalAlignments), `Fields[${i}].Style.Alignment.Horizontal`);
     })
 
     validateProperty(obj, 'Columns', 'array');

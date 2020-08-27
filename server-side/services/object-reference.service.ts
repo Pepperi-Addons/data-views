@@ -10,12 +10,12 @@ export class ObjectReferenceService {
 
     }
 
-    async objectReferences()  {
+    async objectReferences(): Promise<ObjectReference[]> {
         if (!this._objectReferences) {
-            this._objectReferences = await this.backendService.pepperiObjects()
-                .then(arr => arr.map(ObjectReferenceConverter.toObjectReference).filter(Boolean)) as ObjectReference[];
+            this._objectReferences = await this.backendService.types()
+                .then(arr => arr.map(ObjectReferenceConverter.toObjectReference));
         }
-        return this._objectReferences;
+        return this._objectReferences || [];
     }
 
     async get(reference: ObjectReference) {
