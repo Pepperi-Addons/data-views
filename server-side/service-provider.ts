@@ -1,7 +1,6 @@
 import Bottle from 'bottlejs'
 import { Client, Request } from '@pepperi-addons/debug-server'
 import { PapiClient } from '@pepperi-addons/papi-sdk'
-import { BackendService } from './services/backend.service';
 import { UIControlService } from './services/ui-control.service';
 import { ProfilesService } from './services/profiles.service';
 import { ObjectReferenceService } from './services/object-reference.service';
@@ -20,15 +19,10 @@ export class ServiceProvider {
                 token: client.OAuthAccessToken
             })
         });
-        this.bottle.service('BackendService', BackendService, 'PapiClient');
-        this.bottle.service('UIControlService', UIControlService, 'BackendService');
-        this.bottle.service('ProfilesService', ProfilesService, 'BackendService');
-        this.bottle.service('ObjectReferenceService', ObjectReferenceService, 'BackendService');
-        this.bottle.service('DataViewService', DataViewService, 'UIControlService', 'ProfilesService', 'ObjectReferenceService');
-    }
-
-    backendService() {
-        return this.bottle.container.BackendService as BackendService;
+        this.bottle.service('UIControlService', UIControlService, 'PapiClient');
+        this.bottle.service('ProfilesService', ProfilesService, 'PapiClient');
+        this.bottle.service('ObjectReferenceService', ObjectReferenceService, 'PapiClient');
+        this.bottle.service('DataViewService', DataViewService, 'UIControlService', 'ProfilesService', 'ObjectReferenceService', 'PapiClient');
     }
 
     dataViewService() {

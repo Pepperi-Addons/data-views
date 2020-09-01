@@ -1,39 +1,44 @@
-import { BackendService } from "./backend.service";
-import { ObjectReference, UIControlData } from "@pepperi-addons/papi-sdk";
-import { JSONFilter, concat, toApiQueryString } from "@pepperi-addons/pepperi-filters"
+import { UIControlData, PapiClient } from "@pepperi-addons/papi-sdk";
 import { UIControlDataConverter } from '../converters/ui-control-data.converter'
 
 export class UIControlService {
 
-    constructor(private backendService: BackendService) {
+    constructor(private papiClient: PapiClient) {
 
     }
 
     find(where: string, include_deleted: boolean) {
-        return this.backendService.uiControls(where, include_deleted).then(arr => arr.map(UIControlDataConverter.toUIControlData))
+        return this.papiClient.uiControls.iter({
+            where: where,
+            include_deleted: include_deleted,
+            page_size: -1
+        }).toArray().then(arr => arr.map(UIControlDataConverter.toUIControlData))
     }
 
-    async get(internalID: number) {
-        const arr = await this.backendService.uiControls(toApiQueryString(this.internalIDFilter(internalID)) || '', true);
-
-        if (arr.length) {
-            return UIControlDataConverter.toUIControlData(arr[0])
-        }
-        else {
-            return undefined;
-        }
+    get(ids: number[]) {
+        const where = ids.map(id => `InternalID = ${id}`).join(' OR ');
+        return this.find(where, true);
     }
 
     async upsert(uiControl: UIControlData): Promise<UIControlData> {
-        return this.backendService.upsertUiControl(UIControlDataConverter.toUIControl(uiControl)).then(UIControlDataConverter.toUIControlData);
+        return this.papiClient.uiControls.upsert(UIControlDataConverter.toUIControl(uiControl))
+            .then(UIControlDataConverter.toUIControlData);
+    }
+    
+    async batch(uiControls: UIControlData[]) {
+        return this.papiClient.uiControls.batch(uiControls.map(UIControlDataConverter.toUIControl));
     }
 
-    internalIDFilter(internalID: number): JSONFilter {
-        return {
-            FieldType: 'Integer',
-            ApiName: 'InternalID',
-            Operation: 'IsEqual',
-            Values: [ internalID.toString() ]
-        }
+    allUIControlsIdentities(where: string = '') {
+        return this.papiClient.uiControls.iter({
+            where: where,
+            fields: ['InternalID', 'Type', 'PermissionRoleID'],
+            include_deleted: true,
+            page_size: -1
+        }).toArray() as Promise<{
+            InternalID: number;
+            Type: string;
+            PermissionRoleID: number;
+        }[]>
     }
 }

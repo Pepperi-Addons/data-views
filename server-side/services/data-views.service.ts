@@ -2,10 +2,10 @@ import { UIControlService } from "./ui-control.service";
 import { ProfilesService } from "./profiles.service";
 import { ObjectReferenceService } from "./object-reference.service";
 import { DataViewConverter } from "../converters/data-view.converter";
-import { DataView, ResourceType, DataViewContext, UIControlData } from '@pepperi-addons/papi-sdk'
-import { parse, transform, JSONFilter, JSONBaseFilter, toApiQueryString, filter, FieldType, concat } from "@pepperi-addons/pepperi-filters";
+import { DataView, ResourceType, DataViewContext, GridDataView, BaseFormDataView, BatchApiResponse, UIControlData } from '@pepperi-addons/papi-sdk'
+import { parse, transform, JSONBaseFilter, toApiQueryString, filter, FieldType } from "@pepperi-addons/pepperi-filters";
 import { NodeTransformer } from "@pepperi-addons/pepperi-filters/build/json-filter-transformer";
-import { validateDataView } from "../validators/data-view.validator";
+import { validateDataView, validateDataViewScheme } from "../validators/data-view.validator";
 
 export class DataViewService {
 
@@ -15,18 +15,6 @@ export class DataViewService {
         private objectReferencesService: ObjectReferenceService
         ) {
 
-    }
-
-    async get(internalID: number): Promise<DataView> {
-        const uiControl = await this.uiControlService.get(internalID);
-
-        if (!uiControl) {
-            throw new Error(`Could not find DataView with InternalID = ${internalID}`);
-        }
-
-        const res = DataViewConverter.toDataView(uiControl)
-        await this.updateContext(res);
-        return res;
     }
 
     async find(where: string = '', include_deleted: boolean) {
@@ -57,39 +45,52 @@ export class DataViewService {
         return res;
     }
 
-    async upsert(dataView: DataView): Promise<DataView> {
+    async upsert(dataView: DataView) {
 
-        validateDataView(dataView);
+        // validate fields
+        validateDataViewScheme(dataView);
+
+        // update non-existing fields
+        await this.updateContext(dataView);
         
         // this might be updating an existing dataView or creating a new one
         let existing: DataView | undefined = undefined;
         
         // if InternalID was specified always look for the dataView with that UIControl
         if (dataView.InternalID) {
-            existing = await this.get(dataView.InternalID);
-
-            await this.updateContext(dataView);
-
-            if (!this.compare(dataView.Context, existing.Context)) {
-                throw new Error(`The Context send does not match the current Context. Current Context: ${JSON.stringify(existing.Context)}`)
+            const l = await this.uiControlService.find(`InternalID = ${dataView.InternalID}`, true);
+            
+            if (l.length === 0) {
+                throw new Error(`DataView with InternalID = ${dataView.InternalID} does not exist`)
             }
+
+            existing = DataViewConverter.toDataView(l[0]);
         }
         else {
-            await this.updateContext(dataView);
-            
             // See if there is a dataview with this context already
-            let where = this.createContextQuery(dataView.Context);
-            let results = await this.find(where, false);
-            if (results.length > 1) {
+            const l = await this.uiControlService.find(
+                `Type = '${DataViewConverter.toType(dataView.Context!)}' AND PermissionRoleID = ${dataView.Context!.Profile.InternalID}`, 
+                true
+            );
+            if (l.length > 1) {
                 throw new Error(`There should only be one data view for context: ${JSON.stringify(dataView.Context)}`);
             }
-            else if (results.length == 1) {
-                existing = results[0];
+            else if (l.length == 1) {
+                existing = DataViewConverter.toDataView(l[0]);
+                await this.updateContext(existing);
             } 
         }
 
-        const uiControl: UIControlData =  await this.uiControlService.upsert(DataViewConverter.toUIControlData(dataView));
-        const res =  DataViewConverter.toDataView(uiControl);
+        console.log(existing ? `Updating data-view with InternalID = ${existing.InternalID}` : `Creating a new data-view`);
+
+        // fill in missing fields & validate matching
+        this.mergeDataViews(dataView, existing);
+
+        // after merging we check the validity of the data-view as a whole
+        validateDataView(dataView);
+
+        // upsert
+        const res = await this.uiControlService.upsert(DataViewConverter.toUIControlData(dataView)).then(DataViewConverter.toDataView);
         
         // update fields that don't exist on the UIControl  
         await this.updateContext(res);
@@ -97,77 +98,160 @@ export class DataViewService {
         return res;
     }
 
-    async updateContext(dataView: DataView) {
-        if (dataView.Context.Object) {
-            dataView.Context.Object = await this.objectReferencesService.get(dataView.Context.Object);
-        }
+    async bulkUpsert(dataViews: DataView[]): Promise<BatchApiResponse[]> {
+        const uiControlIdentities = await this.uiControlService.allUIControlsIdentities();
+        let inserts: DataView[] = []
+        let updates: DataView[] = []
 
-        if (dataView.Context.Profile) {
-            if (dataView.Context.Profile.InternalID) {
-                const profile = await this.profilesService.get(dataView.Context.Profile.InternalID);
+        for (const dataView of dataViews) {
+            
+            // throws scheme errors (missing / invalid fields)
+            validateDataViewScheme(dataView);
+            
+            // update missing fields in context (Profile.InternalID, Context.Object.InternalID)
+            await this.updateContext(dataView);
 
-                if (!profile) {
-                    throw new Error(`Profile with InternalID = ${dataView.Context.Profile.InternalID} not found`);
+            if (dataView.InternalID) {
+                const existing = uiControlIdentities.find(item => item.InternalID === dataView.InternalID);
+                if (!existing) {
+                    throw new Error(`DataView with InternalID = ${dataView.InternalID} does not exist`);
                 }
 
-                dataView.Context.Profile = profile;
+                updates.push(dataView);
             }
-            else if (dataView.Context.Profile.Name) {
-                const profile = await this.profilesService.get(dataView.Context.Profile.Name);
-
-                if (!profile) {
-                    throw new Error(`Profile with Name = ${dataView.Context.Profile.Name} not found`);
-                }
-
-                dataView.Context.Profile = profile;
-            }
-        }
-    }
-
-
-    compare(c1: DataViewContext, c2: DataViewContext): boolean {
-        let res = true;
-
-        // dataView.Context.Name must equal
-        res = res && c1.Name === c2.Name;
-
-        // dataView.Context.ScreenSize must equal
-        res = res && c1.ScreenSize === c2.ScreenSize;
-
-        // dataView.Context.Profile must equal
-        res = res && c1.Profile.InternalID === c2.Profile.InternalID;
-
-        // dataView.Context.Object must equal
-        if (res && c1.Object) {
-            res = res && !!c2.Object;
-            if (res && c2.Object) {
-                res = res && c1.Object.Resource === c2.Object.Resource;
-
-                // atds
-                if (c1.Object.Resource !== 'lists') {
-                    res = res && c1.Object.InternalID == c2.Object.InternalID;
+            else {
+                const existing = uiControlIdentities.find(item => this.compare(dataView.Context!, item))
+                if (existing) {
+                    dataView.InternalID = existing.InternalID;
+                    updates.push(dataView);
                 }
                 else {
-                    // generic lists
-                    res = res && c1.Object.UUID === c2.Object.UUID;
+                    inserts.push(dataView);
                 }
             }
         }
-    
-        return res;
+
+        // get fields not sent for existing data-views
+        if (updates.length) {
+            const l = await this.uiControlService.get(updates.map(item => item.InternalID || 0))
+                .then(arr => arr.map(DataViewConverter.toDataView));
+
+            if (l.length != updates.length) {
+                // should not happen
+                throw new Error(`Error retrieving existing data-views to update`)
+            }
+
+            for (const existing of l) {
+                const dataView = updates.find(dataView => dataView.InternalID === existing.InternalID)!;
+                this.mergeDataViews(dataView, existing);
+            }
+        }
+
+        // fill missing fields with defaults
+        for (const dataView of inserts) {
+            this.mergeDataViews(dataView, undefined);
+        }
+
+        // after merging we check the validity of the data-view as a whole
+        for (const dataView of dataViews) {
+            validateDataView(dataView);
+        }
+
+        // upsert
+        const responses = await this.uiControlService.batch(dataViews.map(DataViewConverter.toUIControlData));
+
+        // change URL from UIControl to data-views
+        for (const response of responses) {
+            response.URI = `/meta_data/data_views?where=InternalID=${response.InternalID}`
+        }
+        
+        return responses;
     }
 
-    createContextQuery(context: DataViewContext) {
-        const where = concat(
-            true, 
-            `Context.Name = '${context.Name}'`,
-            `Context.ScreenSize = '${context.ScreenSize}'`,
-            `Context.Profile.InternalID = ${context.Profile.InternalID}`,
-            context.Object ? `Context.Object.Resource = '${context.Object.Resource}'` : undefined,
-            context.Object?.Resource === 'lists' ? `Context.Object.InternalID = ${context.Object.InternalID}` : undefined,
-            context.Object && context.Object.Resource !== 'lists' ? `Context.Object.UUID = '${context.Object.UUID}'` : undefined,
-        )
-        return where;
+    async updateContext(dataView: DataView) {
+        if (dataView.Context) {
+            if (dataView.Context.Object) {
+                dataView.Context.Object = await this.objectReferencesService.get(dataView.Context.Object);
+            }
+    
+            if (dataView.Context.Profile) {
+                if (dataView.Context.Profile.InternalID) {
+                    const profile = await this.profilesService.get(dataView.Context.Profile.InternalID);
+    
+                    if (!profile) {
+                        throw new Error(`Profile with InternalID = ${dataView.Context.Profile.InternalID} not found`);
+                    }
+    
+                    dataView.Context.Profile = profile;
+                }
+                else if (dataView.Context.Profile.Name) {
+                    const profile = await this.profilesService.get(dataView.Context.Profile.Name);
+    
+                    if (!profile) {
+                        throw new Error(`Profile with Name = ${dataView.Context.Profile.Name} not found`);
+                    }
+    
+                    dataView.Context.Profile = profile;
+                }
+            }
+        }
+    }
+
+
+    compare(context: DataViewContext, identity: { InternalID: number; Type: string; PermissionRoleID: number}): boolean {
+        const type = DataViewConverter.toType(context);
+        const profile = context.Profile.InternalID;
+        return identity.Type === type && identity.PermissionRoleID === profile;
+    }
+
+    mergeDataViews(target: DataView, origin: DataView | undefined) {
+
+        // validation of fields that can't be changed
+        if (origin) {
+            if (target.Type !== origin.Type) {
+                throw new Error(`DataView Type can't be changed from ${origin.Type} to ${target.Type}`);
+            }
+
+            if (target.Context) {
+                if (DataViewConverter.toType(target.Context) != DataViewConverter.toType(origin.Context!) || 
+                    target.Context.Profile.InternalID !== origin.Context!.Profile.InternalID) {
+                        throw new Error(`The Context sent does not match the existing Context. Expected: ${JSON.stringify(target.Context)}, Actual: ${JSON.stringify(origin.Context)}`);
+                    }
+            }
+        }
+
+        target.InternalID = target.InternalID ?? origin?.InternalID ?? 0;
+        target.Type = target.Type ?? origin?.Type;
+        target.Hidden = target.Hidden ?? origin?.Hidden ?? false
+        target.Context = target.Context ?? origin?.Context;
+        target.Title = target.Title ?? origin?.Title ?? '';
+        target.Fields = target.Fields ?? origin?.Fields ?? [];
+
+        switch(target.Type) {
+            case 'Grid':
+                this.mergeGridDataViews(target, origin as (GridDataView | undefined));
+                break;
+    
+            case 'Menu': 
+                break;
+    
+            case 'Configuration':
+                break;
+    
+            default:
+                this.mergeBaseFormDataViews(target as BaseFormDataView, origin as (BaseFormDataView | undefined));
+                break;
+        }
+    }
+
+    mergeGridDataViews(target: GridDataView, origin: GridDataView | undefined) {
+        target.Columns = target.Columns ?? origin?.Columns ?? []
+        target.FrozenColumnsCount = target.FrozenColumnsCount ?? origin?.FrozenColumnsCount ?? 0
+        target.MinimumColumnWidth = target.MinimumColumnWidth ?? origin?.MinimumColumnWidth ?? 0
+    }
+    mergeBaseFormDataViews(target: BaseFormDataView, origin: BaseFormDataView | undefined) {
+        target.Columns = target.Columns ?? origin?.Columns ?? []
+        target.Rows = target.Rows ?? origin?.Rows ?? []
     }
 
     async fieldTransformations(): Promise<{ [key: string]: NodeTransformer }> {

@@ -1,18 +1,17 @@
-import { BackendService } from "./backend.service";
-import { ObjectReference, ResourceType } from "@pepperi-addons/papi-sdk";
+import { ObjectReference, ResourceType, PapiClient } from "@pepperi-addons/papi-sdk";
 import { ObjectReferenceConverter } from "../converters/object-reference.converter";
 
 export class ObjectReferenceService {
 
     private _objectReferences: ObjectReference[] | undefined
 
-    constructor(private backendService: BackendService) {
+    constructor(private papiClient: PapiClient) {
 
     }
 
     async objectReferences(): Promise<ObjectReference[]> {
         if (!this._objectReferences) {
-            this._objectReferences = await this.backendService.types()
+            this._objectReferences = await this.papiClient.types.iter({ include_deleted: true }).toArray()
                 .then(arr => arr.map(ObjectReferenceConverter.toObjectReference));
         }
         return this._objectReferences || [];

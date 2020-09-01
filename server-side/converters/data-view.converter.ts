@@ -1,4 +1,4 @@
-import { UIControlData, UIControlViewType, DataViewType, UIControlViewTypes, DataView, ObjectReference, DataViewContext, ResourcePrefix, DataViewScreenSize, ResoursePrefixes, UIControlField, GridDataViewField, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, BaseFormDataViewField, MenuDataViewField, ResourceType, DataViewField, GridDataView, DataViewRowModes, BaseFormDataView  } from "@pepperi-addons/papi-sdk";
+import { UIControlData, UIControlViewType, DataViewType, UIControlViewTypes, DataView, ObjectReference, DataViewContext, ResourcePrefix, DataViewScreenSize, ResoursePrefixes, UIControlField, GridDataViewField, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, BaseFormDataViewField, MenuDataViewField, ResourceType, DataViewField, GridDataView, DataViewRowModes, BaseFormDataView, BaseDataView  } from "@pepperi-addons/papi-sdk";
 import { UIControlConfigurationsService } from "../services/ui-control-configuration.service";
 
 export class DataViewConverter {
@@ -12,7 +12,7 @@ export class DataViewConverter {
     private static createDataView(uiControl: UIControlData): DataView {
         const configuration = UIControlConfigurationsService.configuration(uiControl);
         
-        const dataView: DataView = {
+        const dataView: BaseDataView = {
             InternalID: uiControl.ObjectID,
             Type: configuration.Type,
             Title: uiControl.DisplayName,
@@ -33,27 +33,27 @@ export class DataViewConverter {
 
         switch(dataView.Type) {
             case "Grid": {
-                DataViewConverter.populateGridDataView(dataView, uiControl);
+                DataViewConverter.populateGridDataView(dataView as DataView, uiControl);
                 break;
             }
 
             case "Menu": {
-                DataViewConverter.populateMenuDataView(dataView, uiControl);
+                DataViewConverter.populateMenuDataView(dataView as DataView, uiControl);
                 break;
             }
 
             case "Configuration": {
-                DataViewConverter.populateConfigurationDataView(dataView, uiControl);
+                DataViewConverter.populateConfigurationDataView(dataView as DataView, uiControl);
                 break;
             }
 
             default: {
-                DataViewConverter.populateBaseFormDataView(dataView, uiControl);
+                DataViewConverter.populateBaseFormDataView(dataView as DataView, uiControl);
                 break;
             }
         }
 
-        return dataView;
+        return dataView as DataView;
     }
 
     private static populateGridDataView(dataView: DataView, uiControl: UIControlData) {
@@ -144,9 +144,9 @@ export class DataViewConverter {
 
     static toUIControlData(dataView: DataView): UIControlData {
         const res: UIControlData = {
-            ObjectID: dataView.InternalID || 0,
+            ObjectID: dataView.InternalID!,
             Hidden: dataView.Hidden || false,
-            Type: DataViewConverter.toType(dataView.Context),
+            Type: DataViewConverter.toType(dataView.Context!),
             CreationDate: dataView.CreationDateTime || '',
             ModificationDate: dataView.ModificationDateTime || '',
             ControlFields: (dataView.Fields as any[]).map((field, i) => {
@@ -195,13 +195,13 @@ export class DataViewConverter {
             ActivityTypesID: null, // TODO: where is this mapped to?
             Statuses: null, // TODO: where is this mapped to?
             ControlName: null, // TODO: what is this??
-            ViewType: DataViewConverter.toUIControlType(dataView.Type),
-            PermissionRoleID: dataView.Context.Profile.InternalID || 0,
-            PermissionRoleName: dataView.Context.Profile.Name || '',
+            ViewType: DataViewConverter.toUIControlType(dataView.Type!),
+            PermissionRoleID: dataView.Context!.Profile.InternalID || 0,
+            PermissionRoleName: dataView.Context!.Profile.Name || '',
             Version: 1, // TODO: 
             Layout: {
                 columnDefinitions: [], // not in use
-                rowDefinitions: 'Rows' in dataView ? dataView.Rows.map(row => { return { mode: DataViewRowModes[row.Mode] as 0 | 1 }}) : [],
+                rowDefinitions: 'Rows' in dataView ? dataView.Rows!.map(row => { return { mode: DataViewRowModes[row.Mode] as 0 | 1 }}) : [],
                 frozenColumnsCount: 0, // override in Grid
                 Width: 0, // TODO: what is this???
                 MinimumWidth: 0, // override in Grid
@@ -216,11 +216,11 @@ export class DataViewConverter {
 
         if (dataView.Type === 'Grid') {
             const grid = dataView as GridDataView;
-            res.Layout.MinimumWidth = grid.MinimumColumnWidth;
-            res.Layout.frozenColumnsCount = grid.FrozenColumnsCount;
+            res.Layout.MinimumWidth = grid.MinimumColumnWidth!;
+            res.Layout.frozenColumnsCount = grid.FrozenColumnsCount!;
 
-            (dataView as GridDataView).Fields.forEach((field, i) => {
-                res.ControlFields[i].ColumnWidth = grid.Columns[i].Width;
+            (dataView as GridDataView).Fields!.forEach((field, i) => {
+                res.ControlFields[i].ColumnWidth = grid.Columns![i].Width;
                 res.ControlFields[i].Layout.Width = 1;
                 res.ControlFields[i].Layout.Field_Height = 1;
             });

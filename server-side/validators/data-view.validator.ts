@@ -1,7 +1,7 @@
-import { DataViewTypes, ResourceTypes, DataViewType, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, DataViewRowModes, DataViewScreenSizes } from '@pepperi-addons/papi-sdk'
+import { DataViewTypes, ResourceTypes, DataViewType, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, DataViewRowModes, DataViewScreenSizes, DataView, GridDataView } from '@pepperi-addons/papi-sdk'
 import configurations from '../ui-control-configurations.json'
 
-export function validateDataView(obj: any) {
+export function validateDataViewScheme(obj: any) {
     if (typeof obj !== 'object') {
         throw new Error(`Expected input to be of type 'object', instead get input of type '${typeof obj}'`);
     }
@@ -9,81 +9,90 @@ export function validateDataView(obj: any) {
         throw new Error(`Expected input to be of type 'object', instead get input of type 'array'`);
     }
 
-    validateProperty(obj, 'Type', DataViewTypes);
-    validateProperty(obj, 'Context', 'object');
+    validateProperty(obj, 'InternalID', 'number', 'InternalID', false);
+    validateProperty(obj, 'Hidden', 'boolean', 'Hidden', false);
+    validateProperty(obj, 'Title', 'string', 'Title', false);
+    validateProperty(obj, 'Type', DataViewTypes, 'Type');
+    validateProperty(obj, 'Context', 'object', 'Context', false);
 
-    // Context.Name
-    validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
-    
-    if (!/^[a-zA-Z0-9_]+$/.test(obj.Context.Name)) {
-        throw new Error(`Context.Name must be non-empty and can only contain letters, numbers or an underscore`);
+    if (!('InternalID' in obj) && !('Context' in obj)) {
+        throw new Error(`Expected either InternalID or Context`);
     }
 
-    const configuration = configurations[obj.Context.Name];
-
-    if (configuration && configuration.Type !== obj.Type) {
-        throw new Error(`Expected Type = '${configuration.Type}' for Context.Name = '${obj.Context.Name}'`);
-    }
-
-    if (obj.Type === 'Menu' || obj.Type === 'Configuration') {
-        const types = Object.entries(configurations)
-            .filter(([_, value]) => value.Type === obj.Type)
-            .map(([key, _]) => key);
-        validateProperty(obj.Context, 'Name', types, 'Context.Name')
-    }
-
-    validateProperty(obj.Context, 'ScreenSize', DataViewScreenSizes, 'Context.ScreenSize');
-    validateProperty(obj.Context, 'Profile', 'object', 'Context.Profile');
-    
-    if (!('InternalID' in obj.Context.Profile) && !('Name' in obj.Context.Profile)) {
-        throw new Error(`Expected field: 'Context.Profile' to have either 'Name' or 'InternalID'`);
-    }
-
-    if ('InternalID' in obj.Context.Profile) {
-        validateProperty(obj.Context.Profile, 'InternalID', 'number', 'Context.Profile.InternalID');
-    }
-
-    if ('Name' in obj.Context.Profile) {
-        validateProperty(obj.Context.Profile, 'Name', 'string', 'Context.Profile.Name');
-    }
-
-    if (configuration && configuration.Object) {
-        validateProperty(obj.Context, 'Object', 'object', 'Context.Object');
-    }
-
-    if (obj.Context.Object) {
-        if (configuration && !configuration.Object) {
-            throw new Error(`Unexpected field: 'Context.Object' for DataView of '${obj.Context.Name}'`)
-        }
-
-        validateProperty(obj.Context.Object, 'Resource', ResourceTypes, 'Context.Object.Resource');
-        if (configuration && configuration.Object.Resource && obj.Context.Object.Resource !== configuration.Object.Resource) {
-            throw new Error(`Expected field: 'Context.Object.Resource' for DataView of '${obj.Context.Name}' to be '${configuration.Object.Resource}'`)
-        }
-
-        if (obj.Context.Object.Resource === 'lists') {
-            // Generic List
-            validateProperty(obj.Context.Object, 'UUID', 'string', 'Context.Object.UUID');
-        }
-        else {
-            // ATD
-            if (!('InternalID' in obj.Context.Object) && !('Name' in obj.Context.Object)) {
-                throw new Error(`Expected field: 'Context.Object' to have either 'Name' or 'InternalID'`);
-            }
-
-            if ('InternalID' in obj.Context.Object) {
-                validateProperty(obj.Context.Object, 'InternalID', 'number', 'Context.Object.InternalID');
-            }
+    if ('Context' in obj) {
+        // Context.Name
+        validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
             
-            if ('Name' in obj.Context.Object) {
-                validateProperty(obj.Context.Object, 'Name', 'string', 'Context.Object.Name');
+        if (!/^[a-zA-Z0-9_]+$/.test(obj.Context.Name)) {
+            throw new Error(`Context.Name must be non-empty and can only contain letters, numbers or an underscore`);
+        }
+
+        const configuration = configurations[obj.Context.Name];
+
+        if (configuration && configuration.Type !== obj.Type) {
+            throw new Error(`Expected Type = '${configuration.Type}' for Context.Name = '${obj.Context.Name}'`);
+        }
+
+        if (obj.Type === 'Menu' || obj.Type === 'Configuration') {
+            const types = Object.entries(configurations)
+                .filter(([_, value]) => value.Type === obj.Type)
+                .map(([key, _]) => key);
+            validateProperty(obj.Context, 'Name', types, 'Context.Name')
+        }
+
+        validateProperty(obj.Context, 'ScreenSize', DataViewScreenSizes, 'Context.ScreenSize');
+        validateProperty(obj.Context, 'Profile', 'object', 'Context.Profile');
+
+        if (!('InternalID' in obj.Context.Profile) && !('Name' in obj.Context.Profile)) {
+            throw new Error(`Expected field: 'Context.Profile' to have either 'Name' or 'InternalID'`);
+        }
+
+        if ('InternalID' in obj.Context.Profile) {
+            validateProperty(obj.Context.Profile, 'InternalID', 'number', 'Context.Profile.InternalID');
+        }
+
+        if ('Name' in obj.Context.Profile) {
+            validateProperty(obj.Context.Profile, 'Name', 'string', 'Context.Profile.Name');
+        }
+
+        if (configuration && configuration.Object) {
+            validateProperty(obj.Context, 'Object', 'object', 'Context.Object');
+        }
+
+        if (obj.Context.Object) {
+            if (configuration && !configuration.Object) {
+                throw new Error(`Unexpected field: 'Context.Object' for DataView of '${obj.Context.Name}'`)
+            }
+
+            validateProperty(obj.Context.Object, 'Resource', ResourceTypes, 'Context.Object.Resource');
+            if (configuration && configuration.Object.Resource && obj.Context.Object.Resource !== configuration.Object.Resource) {
+                throw new Error(`Expected field: 'Context.Object.Resource' for DataView of '${obj.Context.Name}' to be '${configuration.Object.Resource}'`)
+            }
+
+            if (obj.Context.Object.Resource === 'lists') {
+                // Generic List
+                validateProperty(obj.Context.Object, 'UUID', 'string', 'Context.Object.UUID');
+            }
+            else {
+                // ATD
+                if (!('InternalID' in obj.Context.Object) && !('Name' in obj.Context.Object)) {
+                    throw new Error(`Expected field: 'Context.Object' to have either 'Name' or 'InternalID'`);
+                }
+
+                if ('InternalID' in obj.Context.Object) {
+                    validateProperty(obj.Context.Object, 'InternalID', 'number', 'Context.Object.InternalID');
+                }
+                
+                if ('Name' in obj.Context.Object) {
+                    validateProperty(obj.Context.Object, 'Name', 'string', 'Context.Object.Name');
+                }
             }
         }
     }
+    
+    validateProperty(obj, 'Fields', 'array', 'Fields', false);
 
-    validateProperty(obj, 'Fields', 'array', 'Fields');
-
-    if (obj.ListData) {
+    if ('ListData' in obj) {
         if (obj.Sort) {
             validateProperty(obj.ListData, 'Sort', 'array', 'ListData.Sort');
 
@@ -101,25 +110,25 @@ export function validateDataView(obj: any) {
 
     switch(obj.Type as DataViewType) {
         case 'Grid':
-            validateGridDataView(obj);
+            validateGridDataViewScheme(obj);
             break;
 
         case 'Menu': 
-            validateMenuDataView(obj);
+            validateMenuDataViewScheme(obj);
             break;
 
         case 'Configuration':
-            validateConfigurationDataView(obj);
+            validateConfigurationDataViewScheme(obj);
             break;
 
         default:
-            validateBaseFormDataView(obj);
+            validateBaseFormDataViewScheme(obj);
             break;
     }
 }
 
-function validateGridDataView(obj: any) {
-    obj.Fields.forEach((field, i) => {
+function validateGridDataViewScheme(obj: any) {
+    obj.Fields?.forEach((field, i) => {
         validateProperty(field, 'FieldID', 'string', `Fields[${i}].FieldID`);
         validateProperty(field, 'Type', Object.keys(DataViewFieldTypes), `Fields[${i}].Type`);
         validateProperty(field, 'Title', 'string', `Fields[${i}].Title`);
@@ -135,21 +144,17 @@ function validateGridDataView(obj: any) {
         validateProperty(field.Style.Alignment, 'Horizontal', Object.keys(HorizontalAlignments), `Fields[${i}].Style.Alignment.Horizontal`);
     })
 
-    validateProperty(obj, 'Columns', 'array');
-    obj.Columns.forEach((column, i) => {
+    validateProperty(obj, 'Columns', 'array', 'Columns', false);
+    obj.Columns?.forEach((column, i) => {
         validateProperty(column, 'Width', 'number', `Columns[${i}].Width`)
     })
 
-    if (obj.Columns.length !== obj.Fields.length) {
-        throw new Error('A Grid\'s number of columns must match it\'s number of fields');
-    }
-
-    validateProperty(obj, 'FrozenColumnsCount', 'number');
-    validateProperty(obj, 'MinimumColumnWidth', 'number');
+    validateProperty(obj, 'FrozenColumnsCount', 'number', 'FrozenColumnsCount', false);
+    validateProperty(obj, 'MinimumColumnWidth', 'number', 'MinimumColumnWidth', false);
 }
 
-function validateBaseFormDataView(obj: any) {
-    obj.Fields.forEach((field, i) => {
+function validateBaseFormDataViewScheme(obj: any) {
+    obj.Fields?.forEach((field, i) => {
         validateProperty(field, 'FieldID', 'string', `Fields[${i}].FieldID`);
         validateProperty(field, 'Type', Object.keys(DataViewFieldTypes), `Fields[${i}].Type`);
         validateProperty(field, 'Title', 'string', `Fields[${i}].Title`);
@@ -168,15 +173,15 @@ function validateBaseFormDataView(obj: any) {
         validateProperty(field.Style.Alignment, 'Horizontal', Object.keys(HorizontalAlignments), `Fields[${i}].Style.Alignment.Horizontal`);
     })
 
-    validateProperty(obj, 'Columns', 'array');
-    obj.Columns.forEach((column, i) => {
+    validateProperty(obj, 'Columns', 'array', 'Columns', false);
+    obj.Columns?.forEach((column, i) => {
         if (typeof column !== 'object') {
             throw new Error(`Expected field: 'Columns[${i}]' to be of type: 'object'`)
         }
     })
 
-    validateProperty(obj, 'Rows', 'array');
-    obj.Rows.forEach((row, i) => {
+    validateProperty(obj, 'Rows', 'array', 'Rows', false);
+    obj.Rows?.forEach((row, i) => {
         if (typeof row !== 'object') {
             throw new Error(`Expected field: 'Rows[${i}]' to be of type: 'object'`)
         }
@@ -185,38 +190,55 @@ function validateBaseFormDataView(obj: any) {
     })
 }
 
-function validateMenuDataView(obj: any) {
-    obj.Fields.forEach((field, i) => {
+function validateMenuDataViewScheme(obj: any) {
+    obj.Fields?.forEach((field, i) => {
         validateProperty(field, 'FieldID', 'string', `Fields[${i}].FieldID`);
         validateProperty(field, 'Title', 'string', `Fields[${i}].Title`);
     })
 }
 
-function validateConfigurationDataView(obj: any) {
-    obj.Fields.forEach((field, i) => {
+function validateConfigurationDataViewScheme(obj: any) {
+    obj.Fields?.forEach((field, i) => {
         validateProperty(field, 'FieldID', 'string', `Fields[${i}].FieldID`);
     })
 }
 
-function validateProperty(obj: any, key: string, type: 'number' | 'string' | 'boolean' | 'object' | 'array' | readonly string[], path: string = key) {
-    if (!(key in obj)) {
+function validateProperty(obj: any, key: string, type: 'number' | 'string' | 'boolean' | 'object' | 'array' | readonly string[], path: string = key, required: boolean = true) {
+    const exists = (key in obj);
+    if (!exists && required) {
         throw new Error(`Missing expected field: '${path}'`)
     }
+    else if (exists) {
+        if (type === 'array') {
+            if (!Array.isArray(obj[key])) {
+                throw new Error(`Expected field: '${path}' to be of type: 'array'`);
+            }
+        }
+        else if (Array.isArray(type)) {
+            // string enum
+            if (!type.includes(obj[key])) {
+                throw new Error(`Expected field: '${path}' to be of one of: ${type.join(', ')}`);
+            }
+        }
+        else {
+            if (typeof obj[key] !== type) {
+                throw new Error(`Expected field: '${path}' to be of type: '${type}'`);
+            }
+        }
+    }
+}
 
-    if (type === 'array') {
-        if (!Array.isArray(obj[key])) {
-            throw new Error(`Expected field: '${path}' to be of type: 'array'`);
-        }
-    }
-    else if (Array.isArray(type)) {
-        // string enum
-        if (!type.includes(obj[key])) {
-            throw new Error(`Expected field: '${path}' to be of one of: ${type.join(', ')}`);
-        }
-    }
-    else {
-        if (typeof obj[key] !== type) {
-            throw new Error(`Expected field: '${path}' to be of type: '${type}'`);
-        }
+export function validateDataView(dataView: DataView) {
+    switch(dataView.Type!) {
+        case 'Grid':
+            {
+                if ((dataView as GridDataView).Columns!.length !== dataView.Fields!.length) {
+                    throw new Error('A Grid\'s number of columns must match it\'s number of fields');
+                }
+            }
+            break;
+
+        default:
+            break;
     }
 }

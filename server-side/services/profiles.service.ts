@@ -1,11 +1,10 @@
-import { BackendService } from "./backend.service";
-import { Profile } from "@pepperi-addons/papi-sdk";
+import { Profile, PapiClient } from "@pepperi-addons/papi-sdk";
 
 export class ProfilesService {
 
     private _profiles: Profile[] | undefined
 
-    constructor(private backendService: BackendService) {
+    constructor(private papiClient: PapiClient) {
 
     }
 
@@ -23,7 +22,7 @@ export class ProfilesService {
     
     async profiles() {
         if (!this._profiles) {
-            this._profiles = await this.backendService.profiles();
+            this._profiles = await this.papiClient.profiles.iter({ include_deleted: true }).toArray();
         }
         return this._profiles;
     }
