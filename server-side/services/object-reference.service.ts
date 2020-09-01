@@ -30,8 +30,7 @@ export class ObjectReferenceService {
             res = await this.getByInternalID(reference.Resource, reference.InternalID);
 
             if (!res) {
-                // uncomment once DI-16801 is solved
-                // throw new Error(`Object with InternalID = ${reference.InternalID} for Resource = '${reference.Resource}' not found`);
+                throw new Error(`Object with InternalID = ${reference.InternalID} for Resource = '${reference.Resource}' not found`);
             }
         }
         else if (reference.Name)
@@ -39,8 +38,7 @@ export class ObjectReferenceService {
             res = await this.getByName(reference.Resource, reference.Name);
 
             if (!res) {
-                // uncomment once DI-16801 is solved
-                // throw new Error(`Object with Name = '${reference.Name}' for Resource = '${reference.Resource}' not found`);
+                throw new Error(`Object with Name = '${reference.Name}' for Resource = '${reference.Resource}' not found`);
             }
         }
 

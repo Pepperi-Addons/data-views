@@ -243,7 +243,9 @@ export class DataViewConverter {
             case 'Grid':
             case 'Line':
             case 'CardsGrid':
-            case 'Map': 
+            case 'Map':
+            case 'Menu':
+            case 'Configuration':
                 return type;
 
             case 'Cards':
@@ -270,6 +272,12 @@ export class DataViewConverter {
 
             case 'Details':
                 return UIControlViewTypes.Detailed;
+
+            case 'Menu': 
+                return UIControlViewTypes.Menu;
+
+            case 'Configuration': 
+                return UIControlViewTypes.Configuration;
         }
 
         return res;

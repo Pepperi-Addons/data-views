@@ -33,13 +33,6 @@ export function validateDataViewScheme(obj: any) {
             throw new Error(`Expected Type = '${configuration.Type}' for Context.Name = '${obj.Context.Name}'`);
         }
 
-        if (obj.Type === 'Menu' || obj.Type === 'Configuration') {
-            const types = Object.entries(configurations)
-                .filter(([_, value]) => value.Type === obj.Type)
-                .map(([key, _]) => key);
-            validateProperty(obj.Context, 'Name', types, 'Context.Name')
-        }
-
         validateProperty(obj.Context, 'ScreenSize', DataViewScreenSizes, 'Context.ScreenSize');
         validateProperty(obj.Context, 'Profile', 'object', 'Context.Profile');
 
