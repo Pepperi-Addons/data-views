@@ -34,8 +34,13 @@ export async function data_views_batch(client: Client, request: Request) {
     if (request.method === 'POST') {
         // hack to solve - DI-16784 Addon API searches & replaces InternalID to WrntyID in Body and vise versa in Response
         // can be removed after this is fixed by nofar
-        const body = JSON.parse(JSON.stringify(request.body).replace(/WrntyID/g, 'InternalID'))
+        let body = JSON.parse(JSON.stringify(request.body).replace(/WrntyID/g, 'InternalID'))
         
+        // hack to support object until DI-16894 is fixed
+        if (typeof body === 'object' && body.hack) {
+            body = body.hack;
+        }
+
         if (!Array.isArray(body)) {
             throw new Error("Expected array input");
         }
