@@ -68,7 +68,7 @@ export class DataViewConverter {
         return {
             FieldID: uiControlField.ApiName,
             Type: DataViewConverter.convertFromEnum(DataViewFieldTypes, uiControlField.FieldType, 'None'),
-            Title: uiControlField.Title,
+            Title: uiControlField.Title || '',
             Mandatory: uiControlField.MandatoryField,
             ReadOnly: uiControlField.ReadOnlyField,
             Layout: {
@@ -98,7 +98,7 @@ export class DataViewConverter {
         return {
             FieldID: uiControlField.ApiName,
             Type: DataViewConverter.convertFromEnum(DataViewFieldTypes, uiControlField.FieldType, 'None'),
-            Title: uiControlField.Title,
+            Title: uiControlField.Title || '',
             Mandatory: uiControlField.MandatoryField,
             ReadOnly: uiControlField.ReadOnlyField,
             Layout: {
@@ -128,7 +128,7 @@ export class DataViewConverter {
     private static createMenuDataViewField(uiControlField: UIControlField): MenuDataViewField {
         return {
             FieldID: uiControlField.ApiName,
-            Title: uiControlField.Title
+            Title: uiControlField.Title || ''
         }
     }
 
