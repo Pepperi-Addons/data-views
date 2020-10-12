@@ -9,7 +9,7 @@
     "OrderCenterMenu": { "Type": "Menu", "Object": { "Resource": "transactions" } },
     "OrderDetailsMenu": { "Type": "Menu", "Object": { "Resource": "transactions" } },
     "OrderDynamicViewsMenu": { "Type": "Menu", "Object": { "Resource": "transactions" } },
-    "SmartSearch": { "Type": "Menu" },
+    "SmartSearch": { "Type": "Menu", "Object": { } },
     "OrderCenterSearch": { "Type": "Menu", "Object": { "Resource": "transactions" } },
     "OrderCartSmartSearch": { "Type": "Menu", "Object": { "Resource": "transactions" } },
     "OrderTopLevelFilters": { "Type": "Menu", "Object": { "Resource": "transactions" } },
