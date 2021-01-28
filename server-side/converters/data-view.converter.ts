@@ -1,4 +1,4 @@
-import { UIControlData, UIControlViewType, DataViewType, UIControlViewTypes, DataView, ObjectReference, DataViewContext, ResourcePrefix, DataViewScreenSize, ResoursePrefixes, UIControlField, GridDataViewField, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, BaseFormDataViewField, MenuDataViewField, ResourceType, DataViewField, GridDataView, DataViewRowModes, BaseFormDataView, BaseDataView  } from "@pepperi-addons/papi-sdk";
+import { UIControlData, UIControlViewType, DataViewType, UIControlViewTypes, DataView, ObjectReference, DataViewContext, ResourcePrefix, DataViewScreenSize, ResoursePrefixes, UIControlField, GridDataViewField, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, BaseFormDataViewField, MenuDataViewField, ResourceType, DataViewField, GridDataView, DataViewRowModes, BaseFormDataView, BaseDataView, ConfigurationDataViewField  } from "@pepperi-addons/papi-sdk";
 import { UIControlConfigurationsService } from "../services/ui-control-configuration.service";
 
 export class DataViewConverter {
@@ -136,9 +136,13 @@ export class DataViewConverter {
         dataView.Fields = uiControl.ControlFields.map(DataViewConverter.createConfigurationDataViewField)
     }
 
-    private static createConfigurationDataViewField(uiControlField: UIControlField): DataViewField {
+    private static createConfigurationDataViewField(uiControlField: UIControlField): ConfigurationDataViewField {
         return {
-            FieldID: uiControlField.ApiName
+            FieldID: uiControlField.ApiName,
+            Type: DataViewConverter.convertFromEnum(DataViewFieldTypes, uiControlField.FieldType, 'None'),
+            Title: uiControlField.Title || '',
+            Mandatory: uiControlField.MandatoryField,
+            ReadOnly: uiControlField.ReadOnlyField,
         }
     }
 

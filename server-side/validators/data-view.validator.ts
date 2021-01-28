@@ -200,6 +200,10 @@ function validateMenuDataViewScheme(obj: any) {
 function validateConfigurationDataViewScheme(obj: any) {
     obj.Fields?.forEach((field, i) => {
         validateProperty(field, 'FieldID', 'string', `Fields[${i}].FieldID`);
+        validateProperty(field, 'Type', Object.keys(DataViewFieldTypes), `Fields[${i}].Type`, false);
+        validateProperty(field, 'Title', 'string', `Fields[${i}].Title`, false);
+        validateProperty(field, 'Mandatory', 'boolean', `Fields[${i}].Mandatory`, false);
+        validateProperty(field, 'ReadOnly', 'boolean', `Fields[${i}].ReadOnly`, false);
     })
 }
 
