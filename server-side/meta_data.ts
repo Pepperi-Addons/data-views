@@ -13,11 +13,7 @@ export async function data_views(client: Client, request: Request) {
         res = await service.find(request.query.where || '', request.query.include_deleted || false);
     }
     else if (request.method === 'POST') {
-        // hack to solve - DI-16784 Addon API searches & replaces InternalID to WrntyID in Body and vise versa in Response
-        // can be removed after this is fixed by nofar
-        const body = JSON.parse(JSON.stringify(request.body).replace(/WrntyID/g, 'InternalID'))
-        
-        res = await service.upsert(body);
+        res = await service.upsert(request.body);
     }
 
     console.log('Request:', JSON.stringify(request), 'took', (performance.now() - t0).toFixed(2), 'milliseconds')
@@ -32,20 +28,11 @@ export async function data_views_batch(client: Client, request: Request) {
     let res: any = undefined;
 
     if (request.method === 'POST') {
-        // hack to solve - DI-16784 Addon API searches & replaces InternalID to WrntyID in Body and vise versa in Response
-        // can be removed after this is fixed by nofar
-        let body = JSON.parse(JSON.stringify(request.body).replace(/WrntyID/g, 'InternalID'))
-        
-        // hack to support object until DI-16894 is fixed
-        if (typeof body === 'object' && body.hack) {
-            body = body.hack;
-        }
-
-        if (!Array.isArray(body)) {
+        if (!Array.isArray(request.body)) {
             throw new Error("Expected array input");
         }
 
-        res = await service.bulkUpsert(body);
+        res = await service.bulkUpsert(request.body);
     }
 
     return res;
