@@ -15,7 +15,7 @@ export class DataViewConverter {
         const dataView: BaseDataView = {
             InternalID: uiControl.ObjectID,
             Type: configuration.Type,
-            Title: uiControl.DisplayName,
+            Title: uiControl.DisplayName || '',
             Hidden: uiControl.Hidden,
             CreationDateTime: uiControl.CreationDate,
             ModificationDateTime: uiControl.ModificationDate, 
