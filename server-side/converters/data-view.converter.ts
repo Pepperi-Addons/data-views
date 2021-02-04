@@ -299,6 +299,8 @@ export class DataViewConverter {
                 return 'transactions';
             case 'GL':
                 return 'lists';
+            case 'CA':
+                return 'catalogs';
         }
     }
 
@@ -314,6 +316,8 @@ export class DataViewConverter {
                 return 'OA';
             case 'lists':
                 return 'GL';
+            case 'catalogs':
+                return 'CA';
         }
     }
 
