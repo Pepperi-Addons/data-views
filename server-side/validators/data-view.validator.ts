@@ -22,9 +22,14 @@ export function validateDataViewScheme(obj: any) {
     if ('Context' in obj) {
         // Context.Name
         validateProperty(obj.Context, 'Name', 'string', 'Context.Name');
-            
+
         if (!/^[a-zA-Z0-9_]+$/.test(obj.Context.Name)) {
-            throw new Error(`Context.Name must be non-empty and can only contain letters, numbers or an underscore`);
+            if (/^\[(AG|AL)#(\d+)\](ActivityList|AccountList)$/.test(obj.Context.Name)) {
+                throw new Error(`DataViews of type: ${obj.Context.Name} are obsolete and are not supported`);
+            }
+            else {
+                throw new Error(`Context.Name must be non-empty and can only contain letters, numbers or an underscore`);
+            }
         }
 
         const configuration = configurations[obj.Context.Name];
