@@ -297,7 +297,7 @@ export class DataViewService {
             // convert to InternalID filter
             'Context.Profile.Name': (f: JSONBaseFilter) => {
                 f.ApiName = 'PermissionRoleID';
-                f.Values = [profiles.find(profile => profile.Name === f.Values[0])?.Name || ''];
+                f.Values = [`${profiles.find(profile => profile.Name === f.Values[0])?.InternalID || 0}`];
             },
             
             // Context.Object.Resource = activities => UIControl.Type starts with '[GA'
