@@ -11,8 +11,9 @@ export class ObjectReferenceService {
 
     async objectReferences(): Promise<ObjectReference[]> {
         if (!this._objectReferences) {
-            this._objectReferences = await this.papiClient.types.iter({ include_deleted: true }).toArray()
-                .then(arr => arr.map(ObjectReferenceConverter.toObjectReference));
+            this._objectReferences = [];
+            await this.populateWithATDS();
+            await this.populateWithCatalogs();
         }
         return this._objectReferences || [];
     }
@@ -51,5 +52,24 @@ export class ObjectReferenceService {
 
     private async getByName(type: ResourceType, name: string) {
         return this.objectReferences().then(arr => arr.find(obj => obj.Resource === type && obj.Name === name))
+    }
+
+    private async populateWithATDS() {
+        await this.papiClient.types.iter({ 
+            include_deleted: true 
+        }).toArray().then(arr => arr.forEach(
+            type => this._objectReferences?.push(ObjectReferenceConverter.toObjectReference(type))
+        ));
+    }
+
+    private async populateWithCatalogs() {
+        await this.papiClient.catalogs.iter({ 
+            include_deleted: true
+         }).toArray().then(arr => arr.forEach(catalog => this._objectReferences?.push({
+            Resource: 'catalogs',
+            Name: catalog.ExternalID,
+            InternalID: catalog.InternalID,
+            UUID: catalog.UUID
+        })));
     }
 }
