@@ -60,8 +60,8 @@ export class DataViewConverter {
         dataView.Fields = uiControl.ControlFields.map(DataViewConverter.createGridDataViewField);
         (dataView as GridDataView).Columns = uiControl.ControlFields.map(field => { return { Width: field.ColumnWidth || 10 } });
         
-        (dataView as GridDataView).FrozenColumnsCount = uiControl.Layout.frozenColumnsCount || 0;
-        (dataView as GridDataView).MinimumColumnWidth = uiControl.Layout.MinimumWidth || 0;
+        (dataView as GridDataView).FrozenColumnsCount = uiControl.Layout?.frozenColumnsCount || 0;
+        (dataView as GridDataView).MinimumColumnWidth = uiControl.Layout?.MinimumWidth || 0;
     }
 
     private static createGridDataViewField(uiControlField: UIControlField): GridDataViewField {
