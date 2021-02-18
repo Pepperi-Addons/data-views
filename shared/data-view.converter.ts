@@ -1,5 +1,5 @@
-import { UIControlData, UIControlViewType, DataViewType, UIControlViewTypes, DataView, ObjectReference, DataViewContext, ResourcePrefix, DataViewScreenSize, ResoursePrefixes, UIControlField, GridDataViewField, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, BaseFormDataViewField, MenuDataViewField, ResourceType, DataViewField, GridDataView, DataViewRowModes, BaseFormDataView, BaseDataView, ConfigurationDataViewField  } from "@pepperi-addons/papi-sdk";
-import { UIControlConfigurationsService } from "../services/ui-control-configuration.service";
+import { UIControlData, UIControlViewType, DataViewType, UIControlViewTypes, DataView, ObjectReference, DataViewContext, ResourcePrefix, DataViewScreenSize, ResoursePrefixes, UIControlField, GridDataViewField, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, BaseFormDataViewField, MenuDataViewField, ResourceType, DataViewField, GridDataView, DataViewRowModes, BaseFormDataView, BaseDataView, ConfigurationDataViewField, DataViewFieldType, HorizontalAlignment, VerticalALignment  } from "@pepperi-addons/papi-sdk/dist/entities";
+import { UIControlConfigurationsService } from "./ui-control-configuration.service";
 
 export class DataViewConverter {
     
@@ -163,7 +163,7 @@ export class DataViewConverter {
                     FieldConditions: null, // not in use - hopefully
                     CustomField: false, // TODO: what does this mean?
                     ApiName: field.FieldID,
-                    FieldType: 'Type' in field ? DataViewFieldTypes[field.Type] : DataViewFieldTypes.TextBox,
+                    FieldType: 'Type' in field ? DataViewFieldTypes[field.Type as DataViewFieldType] : DataViewFieldTypes.TextBox,
                     OptionalValues: undefined, // TODO: not in use anymore?
                     MinValue: -1000000000, // deprecated, should be on the config
                     MaxValue: 1000000000,
@@ -175,8 +175,8 @@ export class DataViewConverter {
                         Width: field.Layout?.Size ? field.Layout.Size.Width : 1,
                         Field_Height: field.Layout?.Size ? field.Layout.Size.Height : 1,
                         Line_Number: i,
-                        xAlignment: field.Style?.Alignment ? HorizontalAlignments[field.Style.Alignment.Horizontal] : HorizontalAlignments.Stretch,
-                        yAlignment: field.Style?.Alignment ? VerticalAlignments[field.Style.Alignment.Vertical] : VerticalAlignments.Center
+                        xAlignment: (field.Style?.Alignment ? HorizontalAlignments[field.Style.Alignment.Horizontal as HorizontalAlignment] : HorizontalAlignments.Stretch) as 0 | 1 | 2 | 3,
+                        yAlignment: (field.Style?.Alignment ? VerticalAlignments[field.Style.Alignment.Vertical as VerticalALignment] : VerticalAlignments.Center) as 0 | 1 | 2 | 3
                     },
                     ColumnWidth: 10, // overriden in Grid
                     ObjectTypeReference: 0, // todo: what is this??
@@ -239,7 +239,7 @@ export class DataViewConverter {
 
 
     static toDataViewType(num: number): DataViewType {
-        const type: UIControlViewType = Object.keys(UIControlViewTypes).find(key => UIControlViewTypes[key] === num) as UIControlViewType;
+        const type: UIControlViewType = Object.keys(UIControlViewTypes).find(key => UIControlViewTypes[key as UIControlViewType] === num) as UIControlViewType;
         switch (type) {
             case 'None':
                 return 'Form';

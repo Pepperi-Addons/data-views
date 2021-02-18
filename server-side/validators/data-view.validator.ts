@@ -1,5 +1,5 @@
 import { DataViewTypes, ResourceTypes, DataViewType, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, DataViewRowModes, DataViewScreenSizes, DataView, GridDataView } from '@pepperi-addons/papi-sdk'
-import configurations from '../ui-control-configurations.json'
+import configurations from '../../shared/ui-control-configurations.json'
 
 export function validateDataViewScheme(obj: any) {
     if (typeof obj !== 'object') {

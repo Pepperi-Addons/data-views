@@ -1,7 +1,7 @@
 import { UIControlService } from "./ui-control.service";
 import { ProfilesService } from "./profiles.service";
 import { ObjectReferenceService } from "./object-reference.service";
-import { DataViewConverter } from "../converters/data-view.converter";
+import { DataViewConverter } from "../../shared/data-view.converter";
 import { DataView, ResourceType, DataViewContext, GridDataView, BaseFormDataView, BatchApiResponse, UIControlData } from '@pepperi-addons/papi-sdk'
 import { parse, transform, JSONBaseFilter, toApiQueryString, filter, FieldType } from "@pepperi-addons/pepperi-filters";
 import { NodeTransformer } from "@pepperi-addons/pepperi-filters/build/json-filter-transformer";
