@@ -16,15 +16,17 @@ export default config.Endpoints.map(endpoint => {
         external: [
         ],
         plugins: [
+            resolve(),
          typescript({
              tsconfigOverride: {
                  compilerOptions: {
                      module: "es2015",
                      declaration: false
                  }
-             }
+             },
+             include: ['**/*.ts', '../shared/**/*.ts']
           }),
-          resolve(),
+          
           commonjs(),
           json()
         ]
