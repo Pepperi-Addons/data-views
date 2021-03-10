@@ -4,6 +4,7 @@ import config from "../../addon.config.json";
 import { Guid } from "../../shared/Guid";
 import { BankFieldConverter } from "../converters/bank-field-converter";
 import { DataViewService } from "./data-views.service";
+import {  validateBankFieldScheme } from "../validators/bank-field.validator";
 
 export class BankFieldService {
   constructor(private papiClient: PapiClient, private dataViewService: DataViewService) {}
@@ -11,8 +12,9 @@ export class BankFieldService {
   async upsert(fieldBankUUID: string, fieldBank: FieldBank): Promise<FieldBank> {
     const tableName = `${fieldBankUUID}_FieldBank`;
 
+    validateBankFieldScheme(fieldBank);
     await this.validateThatTableExist(tableName);
-
+    
     const fieldIdUUID = fieldBank.UUID ? fieldBank.UUID : Guid.newGuid();
     let fieldId = fieldBank.FieldPrefix;
     if (fieldBank.FieldParams) {
@@ -24,8 +26,8 @@ export class BankFieldService {
       const existingField = await this.getByFieldUUID(tableName, fieldBankUUID, fieldBank.UUID);
 
       Object.assign(addonData, fieldBank);
-
       this.updateDataViews(fieldId, existingField.FieldID);
+
     } else {
       Object.assign(addonData, {
         Title: fieldBank.Title,
@@ -33,7 +35,7 @@ export class BankFieldService {
         FieldPrefix: fieldBank.FieldPrefix,
         FieldParams: fieldBank.FieldParams,
         Hidden: fieldBank.Hidden,
-        FieldType: fieldBank.FieldType ? fieldBank.FieldType : "1",
+        FieldType: fieldBank.FieldType ? fieldBank.FieldType : "1", 
       });
     }
     const result = await this.papiClient.addons.data.uuid(config.AddonUUID).table(tableName).upsert(addonData);

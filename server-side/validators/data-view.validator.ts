@@ -212,7 +212,7 @@ function validateConfigurationDataViewScheme(obj: any) {
     })
 }
 
-function validateProperty(obj: any, key: string, type: 'number' | 'string' | 'boolean' | 'object' | 'array' | readonly string[], path: string = key, required: boolean = true) {
+export function validateProperty(obj: any, key: string, type: 'number' | 'string' | 'boolean' | 'object' | 'array' | readonly string[], path: string = key, required: boolean = true) {
     const exists = (key in obj);
     if (!exists && required) {
         throw new Error(`Missing expected field: '${path}'`)
