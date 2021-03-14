@@ -3,11 +3,11 @@ import { ServiceProvider } from './service-provider'
 import { performance } from 'perf_hooks';
 
 export async function data_views(client: Client, request: Request) {
-  const t0 = performance.now();
+    const t0 = performance.now();
 
-  const provider = new ServiceProvider(client, request);
-  const service = provider.dataViewService();
-  let res: any = undefined;
+    const provider = new ServiceProvider(client, request);
+    const service = provider.dataViewService();
+    let res: any = undefined;
 
     if (request.method === 'GET') {
         res = await service.find(request.query.where || '', request.query.include_deleted || false);
@@ -31,7 +31,6 @@ export async function data_views_batch(client: Client, request: Request) {
     if (!Array.isArray(request.body)) {
       throw new Error("Expected array input");
     }
-
     res = await service.bulkUpsert(request.body);
   }
 
@@ -42,7 +41,7 @@ export async function field_bank(client: Client, request: Request) {
   const t0 = performance.now();
 
   const provider = new ServiceProvider(client, request);
-  const service = provider.bankFieldService();
+  const service = provider.fieldBankService();
   let res: any = undefined;
 
   if (request.method === "GET") {

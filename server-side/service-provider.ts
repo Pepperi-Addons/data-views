@@ -5,7 +5,7 @@ import { UIControlService } from './services/ui-control.service';
 import { ProfilesService } from './services/profiles.service';
 import { ObjectReferenceService } from './services/object-reference.service';
 import { DataViewService } from './services/data-views.service';
-import { BankFieldService } from "./services/bank-field.service";
+import { FieldBankService } from "./services/field-bank.service";
 
 export class ServiceProvider {
   bottle: Bottle;
@@ -26,13 +26,13 @@ export class ServiceProvider {
         this.bottle.service('ProfilesService', ProfilesService, 'PapiClient');
         this.bottle.service('ObjectReferenceService', ObjectReferenceService, 'PapiClient');
         this.bottle.service('DataViewService', DataViewService, 'UIControlService', 'ProfilesService', 'ObjectReferenceService', 'PapiClient');
-        this.bottle.service("BankFieldService", BankFieldService, "PapiClient", "DataViewService");
+        this.bottle.service("FieldBankService", FieldBankService, "PapiClient", "DataViewService");
   }
 
   dataViewService() {
     return this.bottle.container.DataViewService as DataViewService;
   }
-  bankFieldService() {
-    return this.bottle.container.BankFieldService as BankFieldService;  
+  fieldBankService() {
+    return this.bottle.container.FieldBankService as FieldBankService;  
   }
 }
