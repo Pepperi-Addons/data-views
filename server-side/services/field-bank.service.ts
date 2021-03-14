@@ -75,7 +75,7 @@ export class FieldBankService {
 		}
 	}
 
-	private async validateThatTableExist(tableName: string): Promise void> {
+	private async validateThatTableExist(tableName: string): Promise <void> {
         // Create a table in ADAL if it does not exist
 		const addonDataScheme: AddonDataScheme = {
 			Name: tableName,
@@ -84,7 +84,7 @@ export class FieldBankService {
 		await this.papiClient.addons.data.schemes.post(addonDataScheme);
 	}
 
-	async get(fieldBankUUID: string): Promise FieldBankCustomField[]> {
+	async get(fieldBankUUID: string): Promise < FieldBankCustomField[]> {
 		try {
 			const tableName = `${fieldBankUUID}_FieldBank`;
 			const result: AddonData[] = await this.papiClient.addons.data.uuid(config.AddonUUID).table(tableName).find();
@@ -95,7 +95,7 @@ export class FieldBankService {
 		}
 	}
 
-	async getCustomFieldByFieldUUID(tableName: string, fieldBankUUID: string, fieldUUID: string): Promise <FieldBankCustomField> {
+	async getCustomFieldByFieldUUID(tableName: string, fieldBankUUID: string, fieldUUID: string): Promise < FieldBankCustomField > {
 		try {
 			let field = await this.papiClient.addons.data.uuid(config.AddonUUID).table(tableName).key(fieldUUID).get();
 			return <FieldBankCustomField> field;
