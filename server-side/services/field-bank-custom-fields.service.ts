@@ -6,42 +6,41 @@ import {
 	DataViewField,
     FieldBankCustomField
 } from "@pepperi-addons/papi-sdk";
-import {v4 as uuidv4} from 'uuid';
+import {v4 as uuid} from 'uuid';
 import config from "../../addon.config.json";
 import {
 	DataViewService
 } from "./data-views.service";
 import {
 	validateBankFieldScheme
-} from "../validators/bank-field.validator";
+} from "../validators/field-bank-custom-fields.validator";
 
-export class FieldBankService {
+export class FieldBankCustomFieldsService {
 	constructor(private papiClient: PapiClient, private dataViewService: DataViewService) {}
 
 	async upsert(fieldBankUUID: string, fieldBank: FieldBankCustomField): Promise <FieldBankCustomField> {
-		const tableName = `${fieldBankUUID}_FieldBank`;
+		const tableName = GetTableName(fieldBankUUID);
 
 		validateBankFieldScheme(fieldBank);
 		await this.validateThatTableExist(tableName);
 
-		const fieldIdUUID = fieldBank.Key ? fieldBank.Key : uuidv4();
+		const key = fieldBank.Key ? fieldBank.Key : uuid();
 
 		let fieldId = fieldBank.FieldPrefix;
-		if (fieldBank.FieldParams) {
+		if (fieldBank.FieldParams && Object.keys(fieldBank.FieldParams).length > 0) {
 			fieldId += "?" + new URLSearchParams(fieldBank.FieldParams).toString();
 		}
 
 		let addonData: AddonData = {
-			Key: fieldIdUUID,
+			Key: key,
 			FieldID: fieldId
 		};
 		if (fieldBank.Key) {
 			const existingField = await this.getCustomFieldByFieldUUID(tableName, fieldBankUUID, fieldBank.Key);
-			Object.assign(addonData, fieldBank);
-			const isEqual = this.Comapre(<FieldBankCustomField>addonData, existingField);
-			if (!isEqual)
-				this.updateDataViews(fieldId, existingField.FieldID);
-
+			if (fieldId !== existingField.FieldID){
+				const params = {oldFieldID: existingField.FieldID, newFieldID: fieldId};
+				this.papiClient.addons.api.async().uuid(config.AddonUUID).file('api').func('update_data_views_fields').post(null, params);
+			}
 		} else {
 			addonData = {
 				...addonData,
@@ -56,22 +55,30 @@ export class FieldBankService {
 		return <FieldBankCustomField> result;
 	}
 
-	private Comapre(newField: FieldBankCustomField, existingField: FieldBankCustomField) {
-		return newField.FieldID === existingField.FieldID;
-	}
-
-	private async updateDataViews(newFieldID: string, oldFieldID ? : string): Promise <void> {
+	async updateDataViews(newFieldID: string, oldFieldID ?: string): Promise <void> {
 
         // Update the field id of the data views that customized with the old field id
-		const uiControlsIds = await this.papiClient.uiControls.find({fields : ['InternalID'], where: `UIControlData like '%${oldFieldID}%'` });
-		for(let uiControl of uiControlsIds){
-		    const dataViews = await this.dataViewService.find(`InternalID=${uiControl.InternalID}`,false);
-            let dataView: DataView = dataViews[0];
-		    let field = (<DataViewField[]>dataView?.Fields)?.find(f =>f.FieldID === oldFieldID);
-            if (field){
-                field.FieldID = newFieldID;
-                await this.dataViewService.upsert(dataView);
-            }
+		const uiControls = await this.papiClient.uiControls.find({fields : ['InternalID'], where: `UIControlData like '%${oldFieldID}%'` });
+		const whereClauseOfIDs = uiControls.map(uc=>uc.InternalID).join("','");
+		const dataViews = await this.dataViewService.find(`UUID IN ('${whereClauseOfIDs}')`,false);
+		const dataViewsToUpdate :DataView[]=[];
+	
+		for(let dataView of dataViews){
+			if (dataView.Fields){
+				let needToUpdateDataView = false;
+				for(let field of dataView.Fields){
+					if (field.FieldID === oldFieldID){
+						field.FieldID = newFieldID;
+						needToUpdateDataView = true;
+					}
+				}
+				if (needToUpdateDataView){
+					dataViewsToUpdate.push(dataView);
+				}
+			}
+		}
+		if (dataViewsToUpdate.length > 0){
+			await this.dataViewService.bulkUpsert(dataViewsToUpdate);
 		}
 	}
 
@@ -84,9 +91,9 @@ export class FieldBankService {
 		await this.papiClient.addons.data.schemes.post(addonDataScheme);
 	}
 
-	async get(fieldBankUUID: string): Promise < FieldBankCustomField[]> {
+	async get(fieldBankUUID: string): Promise <FieldBankCustomField[]> {
 		try {
-			const tableName = `${fieldBankUUID}_FieldBank`;
+			const tableName = GetTableName(fieldBankUUID);
 			const result: AddonData[] = await this.papiClient.addons.data.uuid(config.AddonUUID).table(tableName).find();
 			return <FieldBankCustomField[]> result;
 
@@ -103,4 +110,8 @@ export class FieldBankService {
 			throw new Error(`Object with field Bank UUID: '${fieldBankUUID}' and field UUID: '${fieldUUID}' not found`);
 		}
 	}
+}
+
+function GetTableName(fieldBankUUID: string) {
+	return `${fieldBankUUID}_FieldBank`;
 }

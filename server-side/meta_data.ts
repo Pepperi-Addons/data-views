@@ -43,11 +43,12 @@ export async function field_bank(client: Client, request: Request) {
   const provider = new ServiceProvider(client, request);
   const service = provider.fieldBankService();
   let res: any = undefined;
-
+  const fieldBankUUID = request.query.field_bank_UUID;
+  
   if (request.method === "GET") {
-    res = await service.get(request.query.fieldBankUUID);
+    res = await service.get(fieldBankUUID);
   } else if (request.method === "POST") {
-    res = await service.upsert(request.query.fieldBankUUID, request.body);
+    res = await service.upsert(fieldBankUUID, request.body);
   }
 
   console.log(

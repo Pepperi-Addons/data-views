@@ -1,4 +1,4 @@
-import {   DataViewFieldTypes } from "@pepperi-addons/papi-sdk";
+import { DataViewFieldTypes } from "@pepperi-addons/papi-sdk";
 import { validateProperty } from "./property.validator";
 
 export function validateBankFieldScheme(obj: any) {
