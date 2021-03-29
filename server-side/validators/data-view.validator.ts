@@ -1,5 +1,6 @@
 import { DataViewTypes, ResourceTypes, DataViewType, DataViewFieldTypes, VerticalAlignments, HorizontalAlignments, DataViewRowModes, DataViewScreenSizes, DataView, GridDataView } from '@pepperi-addons/papi-sdk'
 import configurations from '../../shared/ui-control-configurations.json'
+import { validateProperty } from './property.validator';
 
 export function validateDataViewScheme(obj: any) {
     if (typeof obj !== 'object') {
@@ -212,30 +213,6 @@ function validateConfigurationDataViewScheme(obj: any) {
     })
 }
 
-function validateProperty(obj: any, key: string, type: 'number' | 'string' | 'boolean' | 'object' | 'array' | readonly string[], path: string = key, required: boolean = true) {
-    const exists = (key in obj);
-    if (!exists && required) {
-        throw new Error(`Missing expected field: '${path}'`)
-    }
-    else if (exists) {
-        if (type === 'array') {
-            if (!Array.isArray(obj[key])) {
-                throw new Error(`Expected field: '${path}' to be of type: 'array'`);
-            }
-        }
-        else if (Array.isArray(type)) {
-            // string enum
-            if (!type.includes(obj[key])) {
-                throw new Error(`Expected field: '${path}' to be of one of: ${type.join(', ')}`);
-            }
-        }
-        else {
-            if (typeof obj[key] !== type) {
-                throw new Error(`Expected field: '${path}' to be of type: '${type}'`);
-            }
-        }
-    }
-}
 
 export function validateDataView(dataView: DataView) {
     switch(dataView.Type!) {
