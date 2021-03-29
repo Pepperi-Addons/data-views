@@ -55,10 +55,11 @@ export class FieldBankCustomFieldsService {
 		return <FieldBankCustomField> result;
 	}
 
-	async updateDataViews(newFieldID: string, oldFieldID ?: string): Promise <void> {
+	async updateDataViews(newFieldID: string, oldFieldID: string): Promise <void> {
 
+		const prefix = oldFieldID.substr(0, oldFieldID.indexOf(','));
         // Update the field id of the data views that customized with the old field id
-		const uiControls = await this.papiClient.uiControls.find({fields : ['InternalID'], where: `UIControlData like '%${oldFieldID}%'` });
+		const uiControls = await this.papiClient.uiControls.find({fields : ['InternalID'], where: `UIControlData like '%"${prefix}%'` });
 		const whereClauseOfIDs = uiControls.map(uc=>uc.InternalID).join("','");
 		const dataViews = await this.dataViewService.find(`UUID IN ('${whereClauseOfIDs}')`,false);
 		const dataViewsToUpdate :DataView[]=[];

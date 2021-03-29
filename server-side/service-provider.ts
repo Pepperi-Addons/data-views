@@ -14,6 +14,7 @@ export class ServiceProvider {
         this.bottle = new Bottle();
 
         this.bottle.service('PapiClient', function() {
+          client.AddonUUID='484e7f22-796a-45f8-9082-12a734bac4e8';
             return new PapiClient({
                 baseURL: client.BaseURL,
                 token: client.OAuthAccessToken,

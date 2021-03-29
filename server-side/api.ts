@@ -6,9 +6,9 @@ export async function update_data_views_fields(client: Client, request: Request)
         const provider = new ServiceProvider(client, request);
         const service = provider.fieldBankService();
 
-        const params = request.query;
-        const oldFieldID = params.oldFieldID;
-        const newFieldID = params.newFieldID;
+        const params = request.body;
+        const oldFieldID = params.OldFieldID;
+        const newFieldID = params.NewFieldID;
         
         await service.updateDataViews(oldFieldID, newFieldID);
     } catch (ex) {

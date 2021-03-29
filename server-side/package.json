@@ -29,7 +29,7 @@
     "dependencies": {
         "@pepperi-addons/debug-server": "0.0.30",
         "@pepperi-addons/papi-sdk": "^1.20.9",
-        "@pepperi-addons/pepperi-filters": "^1.0.5",
+        "@pepperi-addons/pepperi-filters": "^1.0.7",
         "@rollup/plugin-json": "^4.1.0",
         "bottlejs": "^1.7.2",
         "uuid": "^8.3.2"
