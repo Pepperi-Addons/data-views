@@ -1,19 +1,8 @@
-import {
-	AddonData,
-	AddonDataScheme,
-	DataView,
-	PapiClient,
-	DataViewField,
-    FieldBankCustomField
-} from "@pepperi-addons/papi-sdk";
+import { AddonData, AddonDataScheme, DataView, PapiClient, FieldBankCustomField } from "@pepperi-addons/papi-sdk";
 import {v4 as uuid} from 'uuid';
 import config from "../../addon.config.json";
-import {
-	DataViewService
-} from "./data-views.service";
-import {
-	validateBankFieldScheme
-} from "../validators/field-bank-custom-fields.validator";
+import { DataViewService} from "./data-views.service";
+import { validateBankFieldScheme } from "../validators/field-bank-custom-fields.validator";
 
 export class FieldBankCustomFieldsService {
 	constructor(private papiClient: PapiClient, private dataViewService: DataViewService) {}
@@ -35,11 +24,15 @@ export class FieldBankCustomFieldsService {
 			Key: key,
 			FieldID: fieldId
 		};
+
 		if (fieldBank.Key) {
 			const existingField = await this.getCustomFieldByFieldUUID(tableName, fieldBankUUID, fieldBank.Key);
 			if (fieldId !== existingField.FieldID){
-				const params = {oldFieldID: existingField.FieldID, newFieldID: fieldId};
-				this.papiClient.addons.api.async().uuid(config.AddonUUID).file('api').func('update_data_views_fields').post(null, params);
+				// Update fields of data views that contain the old field id
+				const params = {OldFieldID: existingField.FieldID, NewFieldID: fieldId};
+				const executionUuid = await this.papiClient.addons.api.async().uuid(config.AddonUUID).file('meta_data').func('update_data_views_fields').post(undefined,params);
+				console.log(`executionUuid: ${executionUuid}`)
+
 			}
 		} else {
 			addonData = {
@@ -57,18 +50,19 @@ export class FieldBankCustomFieldsService {
 
 	async updateDataViews(newFieldID: string, oldFieldID: string): Promise <void> {
 
-		const prefix = oldFieldID.substr(0, oldFieldID.indexOf(','));
+		const prefix = oldFieldID.substr(0, oldFieldID.indexOf('?'));
         // Update the field id of the data views that customized with the old field id
+		// Search by prefix because the whole fieldID contains invalid characters (like '&')
 		const uiControls = await this.papiClient.uiControls.find({fields : ['InternalID'], where: `UIControlData like '%"${prefix}%'` });
 		const whereClauseOfIDs = uiControls.map(uc=>uc.InternalID).join("','");
-		const dataViews = await this.dataViewService.find(`UUID IN ('${whereClauseOfIDs}')`,false);
-		const dataViewsToUpdate :DataView[]=[];
+		const dataViews = await this.dataViewService.find(`InternalID IN (${whereClauseOfIDs})`,false);
+		const dataViewsToUpdate: DataView[] =[];
 	
 		for(let dataView of dataViews){
-			if (dataView.Fields){
+			if (dataView.Fields) {
 				let needToUpdateDataView = false;
-				for(let field of dataView.Fields){
-					if (field.FieldID === oldFieldID){
+				for(let field of dataView.Fields) {
+					if (field.FieldID === oldFieldID) {
 						field.FieldID = newFieldID;
 						needToUpdateDataView = true;
 					}

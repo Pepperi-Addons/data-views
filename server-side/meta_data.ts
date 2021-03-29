@@ -13,8 +13,8 @@ export async function data_views(client: Client, request: Request) {
         res = await service.find(request.query.where || '', request.query.include_deleted || false);
     }
     else if (request.method === 'POST') {
-    res = await service.upsert(request.body);
-  }
+      res = await service.upsert(request.body);
+    }
 
     console.log('Request:', JSON.stringify(request), 'took', (performance.now() - t0).toFixed(2), 'milliseconds')
 
@@ -63,14 +63,15 @@ export async function field_bank(client: Client, request: Request) {
 
 export async function update_data_views_fields(client: Client, request: Request) {
   try {
-      const provider = new ServiceProvider(client, request);
-      const service = provider.fieldBankService();
+    // Update fields of data views that contain the old field id
+    const provider = new ServiceProvider(client, request);
+    const service = provider.fieldBankService();
 
-      const params = request.body;
-      const oldFieldID = params.OldFieldID;
-      const newFieldID = params.NewFieldID;
-      
-      await service.updateDataViews(oldFieldID, newFieldID);
+    const params = request.body;
+    const oldFieldID = params.OldFieldID;
+    const newFieldID = params.NewFieldID;
+    
+    await service.updateDataViews(oldFieldID, newFieldID);
   } catch (ex) {
     throw new Error(ex);
   }
