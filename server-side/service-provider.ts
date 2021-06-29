@@ -29,4 +29,8 @@ export class ServiceProvider {
     dataViewService() {
         return this.bottle.container.DataViewService as DataViewService;
     }
+
+    uiControlService() {
+        return this.bottle.container.UIControlService as UIControlService;
+    }
 }

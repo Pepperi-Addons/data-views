@@ -222,6 +222,13 @@ export class DataViewConverter {
             const grid = dataView as GridDataView;
             res.Layout.MinimumWidth = grid.MinimumColumnWidth!;
             res.Layout.frozenColumnsCount = grid.FrozenColumnsCount!;
+            
+            // DI-18161
+            // For Grid UIControls the 'Columns' fields allways needs to be 1 
+            // B/C this is how the application logic knows to calculate the columns count
+            // And if we will set the real count, then when the UIControl is edited in the BO 
+            // 'Columns' will hold an incorrect number that isn't 1 and this will break the clients
+            res.Columns = 1;
 
             (dataView as GridDataView).Fields!.forEach((field, i) => {
                 res.ControlFields[i].ColumnWidth = grid.Columns![i].Width;
