@@ -16,7 +16,8 @@ export class ServiceProvider {
         this.bottle.service('PapiClient', function() {
             return new PapiClient({
                 baseURL: client.BaseURL,
-                token: client.OAuthAccessToken
+                token: client.OAuthAccessToken,
+                actionUUID: client.ActionUUID
             })
         });
         this.bottle.service('UIControlService', UIControlService, 'PapiClient');

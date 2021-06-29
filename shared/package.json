@@ -15,6 +15,6 @@
     "typescript": "^4.1.4"
   },
   "dependencies": {
-    "@pepperi-addons/papi-sdk": "^1.20.2"
+    "@pepperi-addons/papi-sdk": "^1.27.4"
   }
 }
