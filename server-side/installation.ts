@@ -14,14 +14,14 @@ export async function upgrade(client: Client, request: Request) {
     // DI-18161
     // When upgrading from version '1.0.3' or less
     // we want to fix Grid UIControls that were created with Columns != 1
-    if (request.body.FromVersion && semver.compare(request.body.FromVersion, '1.0.3') <= 0) {
+    if (request.body.FromVersion && semver.compare(request.body.FromVersion, '1.0.4') <= 0) {
         const provider = new ServiceProvider(client, request);
         const uiControlService = provider.uiControlService();
         const dataViewService = provider.dataViewService();
 
         // get all corrupted UIControl ID's
         const uiControlsIds = await uiControlService.allUIControlsIdentities(
-            `UIControlData LIKE '%ViewType\":1%' AND UIControlData NOT LIKE '%Columns\":1%'`
+            `UIControlData LIKE '%ViewType\":1%' AND UIControlData NOT LIKE '%Columns\":1,%'`
         ).then(res => res.map(uic => uic.InternalID));
         if (uiControlsIds.length) {
             console.log(`found ${uiControlsIds.length} corrupted IDs: `, uiControlsIds);
